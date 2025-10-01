@@ -7,6 +7,7 @@ import "./styles/main.css";
 const App: React.FC = () => (
   <div>
     <Header />
+    <h1>ola</h1>
     <Home />
     <Footer />
   </div>
