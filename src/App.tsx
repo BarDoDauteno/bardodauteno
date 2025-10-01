@@ -1,16 +1,22 @@
-import React from "react";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import Home from "./pages/Home";
-import "./styles/main.css";
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import PostPage from './pages/PostPage';
 
-const App: React.FC = () => (
-  <div>
-    <Header />
-    <h1>ola</h1>
-    <Home />
-    <Footer />
-  </div>
-);
+export default function App() {
+  return (
+    <Router>
+      <Header />
 
-export default App;
+      <main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/post/:id" element={<PostPage />} />
+        </Routes>
+      </main>
+
+      <Footer />
+    </Router>
+  );
+}

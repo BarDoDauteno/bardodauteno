@@ -1,139 +1,73 @@
-/* Fonte elegante */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
-/* Reset básico */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+
+:root{
+--orange-700: #ff7b00;
+--orange-500: #ff9e64;
+--orange-300: #ffb347;
+--bg-start: #fff6f0;
+--text: #333;
 }
 
-body {
-  font-family: 'Roboto', sans-serif;
-  background: linear-gradient(160deg, #ff9e64, #fff);
-  color: #333;
-  min-height: 100vh;
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+font-family: 'Roboto', sans-serif;
+background: linear-gradient(160deg, var(--orange-500), #fff);
+color: var(--text);
+min-height:100vh;
 }
 
-/* Navbar fixa com blur */
-header {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  backdrop-filter: blur(12px);
-  background: rgba(255, 123, 0, 0.7);
-  color: white;
-  padding: 1rem 2rem;
-  text-align: center;
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-bottom: 1px solid rgba(255,255,255,0.3);
-}
 
-header h1 {
-  font-weight: 700;
-  font-size: 2rem;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+/* Header fixa com blur */
+header{
+position:fixed;top:0;left:0;right:0;
+backdrop-filter: blur(8px);
+background: rgba(255,123,0,0.85);
+color:#fff;
+padding:1rem 1.25rem;
+z-index:20;
+box-shadow:0 6px 18px rgba(0,0,0,0.08);
+border-bottom:1px solid rgba(255,255,255,0.15);
 }
+header .inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:1.25rem;font-weight:700;letter-spacing:0.4px;text-shadow:0 2px 6px rgba(0,0,0,0.12)}
+header nav a{color:white;text-decoration:none;margin-left:1rem;font-weight:500}
+header nav a:hover{color:#ffd1a3}
 
-nav a {
-  color: white;
-  text-decoration: none;
-  margin: 0 1rem;
-  font-weight: 500;
-  transition: color 0.3s;
-}
 
-nav a:hover {
-  color: #ffd1a3;
-}
+/* Espaçamento para o main (header fixa) */
+main{padding-top:86px;max-width:1100px;margin:0 auto;padding-left:16px;padding-right:16px}
+
+
+/* Grid dos posts responsivo */
+.post-grid{display:grid;gap:1.5rem;grid-template-columns:repeat(1,1fr);padding:2rem 0}
+@media(min-width:720px){.post-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1100px){.post-grid{grid-template-columns:repeat(3,1fr)}}
+
+
+/* Card */
+.post-card{background:rgba(255,255,255,0.95);padding:1.25rem;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,0.08);transition:transform .28s,box-shadow .28s}
+.post-card:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,0.12)}
+.post-image{width:100%;height:auto;border-radius:10px;margin-bottom:0.9rem;object-fit:cover}
+.post-card h2{color:var(--orange-700);margin-bottom:0.6rem}
+.post-card p{color:#555;line-height:1.6}
+
+
+.read-more{display:inline-block;margin-top:1rem;padding:0.5rem 1rem;border-radius:10px;background:linear-gradient(90deg,var(--orange-700),var(--orange-300));color:white;text-decoration:none;font-weight:600;transition:transform .3s,box-shadow .3s}
+.read-more:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,0.12)}
+
+
+/* Post page */
+.post-page{background:rgba(255,255,255,0.95);padding:2rem;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,0.08);margin-top:1rem}
+.post-full-image{width:100%;height:auto;border-radius:12px;margin:1rem 0}
+.back-link{display:inline-block;margin-top:1.5rem;color:var(--orange-700);text-decoration:none}
+
 
 /* Footer */
-footer {
-  position: fixed;
-  background: linear-gradient(90deg, #ff7b00, #ffb347);
-  color: white;
-  padding: 1.5rem 2rem;
-  text-align: center;
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
+footer{position: fixed;background:linear-gradient(90deg,var(--orange-700),var(--orange-300));color:white;padding:1.25rem;border-radius:0;bottom: 0;right: 0; left: 0;}
+footer .inner{max-width:1100px;margin:0 auto;text-align:center}
 
-footer p {
-  font-weight: 400;
-  font-size: 0.9rem;
-}
 
-/* Main */
-main {
-  padding: 8rem 2rem 2rem 2rem; /* Ajuste para navbar fixa */
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-/* Post cards */
-.post-card {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 2rem;
-  margin-bottom: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
-}
-
-.post-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.12);
-}
-
-.post-card h2 {
-  margin-top: 0;
-  font-weight: 700;
-  color: #ff5e00;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-}
-
-.post-card p {
-  color: #555;
-  line-height: 1.7;
-  margin: 1rem 0;
-}
-
-/* Botão com gradiente animado */
-button {
-  background: linear-gradient(90deg, #ff7b00, #ffb347);
-  background-size: 200% 200%;
-  color: white;
-  border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.4s ease;
-}
-
-button:hover {
-  background-position: 100% 0;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-/* Links dentro dos cards */
-.post-card a {
-  text-decoration: none;
-  color: #ff7b00;
-  font-weight: 500;
-  transition: color 0.3s;
-}
-
-.post-card a:hover {
-  color: #ff9500;
-}
-
-/* Suavização para textos e elementos */
-body, h1, h2, p, button {
-  transition: all 0.3s ease;
-}
+/* pequenas utilidades */
+.container{max-width:1100px;margin:0 auto}

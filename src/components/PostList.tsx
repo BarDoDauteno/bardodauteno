@@ -1,18 +1,18 @@
-import React from "react";
-import PostCard from "./PostCard";
+import React from 'react'
+import PostCard from './PostCard'
+import { posts } from '../data/posts'
+import type { Post } from '../types/Post'
 
-const posts = [
-    { title: "Resenha Da Semana", excerpt: "Como Marcos Vinicios Foi Mogado no dia 30/09/2025" },
-    { title: "Dupla MVP", excerpt: "Neto&Kadafi Humilham beta no x1" },
-    { title: "Teste Comit", excerpt: "------" },
-];
 
-const PostList: React.FC = () => (
-    <main>
-        {posts.map((post, index) => (
-            <PostCard key={index} title={post.title} excerpt={post.excerpt} />
-        ))}
-    </main>
-);
+const PostList: React.FC = () => {
+    return (
+        <section className="post-grid">
+            {posts.map((post: Post) => (
+                <PostCard key={post.id} post={post} />
+            ))}
+        </section>
+    )
+}
 
-export default PostList;
+
+export default PostList

@@ -1,6 +1,10 @@
-import React from "react";
-import PostList from "../components/PostList";
+import PostList from '../components/PostList'
 
-const Home: React.FC = () => <PostList />;
 
-export default Home;
+export default function Home() {
+    return (
+        <div className="container">
+            <PostList />
+        </div>
+    )
+}
