@@ -1,5 +1,5 @@
 {
-  "homepage": "https://bardodauteno.github.io",
+  "homepage": "https://BarDoDauteno.github.io/bardodauteno",
   "name": "bardodauteno",
   "private": true,
   "version": "0.0.0",
@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
