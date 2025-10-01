@@ -2,9 +2,11 @@ import React from "react";
 
 const Header: React.FC = () => (
     <header>
-        <h1>Meu Blog</h1>
+        <h1> Bar Do Dauteno </h1>
         <nav>
-            <a href="#">Home</a> | <a href="#">Sobre</a>
+            <a href="#">Home</a>
+            <a href="#">Sobre</a>
+            <a href="#">Contato</a>
         </nav>
     </header>
 );

@@ -2,8 +2,8 @@ import React from "react";
 import PostCard from "./PostCard";
 
 const posts = [
-    { title: "Primeiro Post", excerpt: "Este é o resumo do primeiro post..." },
-    { title: "Segundo Post", excerpt: "Resumo do segundo post aqui..." },
+    { title: "Resenha Da Semana", excerpt: "Como Marcos Vinicios Foi Mogado no dia 30/09/2025" },
+    { title: "Dupla MVP", excerpt: "Neto&Kadafi Humilham beta no x1" },
 ];
 
 const PostList: React.FC = () => (
