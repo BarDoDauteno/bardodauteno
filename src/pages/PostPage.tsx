@@ -26,7 +26,7 @@ const PostPage: React.FC = () => {
         <div className="container">
             <div className="post-page">
                 <h1>{post.title}</h1>
-                {post.image && <img src={post.image} alt={post.title} className="post-full-image" />}
+                {post.image_url && <img src={post.image_url} alt={post.title} className="post-full-image" />}
                 <p>{post.content}</p>
                 <Link to="/" className="back-link">← Voltar</Link>
             </div>
