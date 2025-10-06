@@ -1,30 +1,160 @@
-.post-card {
+/* Container principal estilo Twitter */
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  overflow-x: hidden;
+}
+
+.sidebar, .ranking {
   background: rgba(21,32,43,0.95);
   padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.sidebar h2, .ranking h2 {
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.sidebar ul, .ranking ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li, .ranking li {
+  margin-bottom: 1rem;
+}
+
+.sidebar a, .ranking a {
+  color: #fff;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.sidebar a:hover, .ranking a:hover {
+  color: var(--accent);
+}
+
+/* Feed central */
+.feed {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 1rem;
 }
 
-.post-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+.create-post {
+  background: rgba(255,140,0,0.1);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
-.post-title { color: var(--accent); font-weight: 600; margin: 0; }
-.post-content { color: #e1e8ed; margin: 0; line-height: 1.4; font-size: 0.95rem; }
+.create-post a {
+  color: #ffa94d;
+  font-weight: bold;
+  text-decoration: none;
+}
 
-/* thumbnails e carrossel mantidos do seu código anterior */
-
-/* espaço para interações futuras */
-.post-interactions {
+.post-grid {
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
-  margin-top: 0.5rem;
-  opacity: 0.85;
-  font-size: 0.9rem;
+  width: 100%;
+  max-width: 1200px;
+  margin-top: 1rem;
+}
+
+/* Responsividade Mobile */
+@media screen and (max-width: 1024px) {
+  .home-container {
+    grid-template-columns: 1fr;
+    padding: 0.5rem;
+  }
+
+  .sidebar {
+    order: -1; /* Sempre no topo */
+    margin-bottom: 1rem;
+  }
+
+  .ranking {
+    order: 2;
+    margin-top: 1rem;
+  }
+
+  .feed {
+    order: 1;
+  }
+}
+.create-post a {
+  color: #ffa94d;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.view-all {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.view-all a {
+  display: inline-block;
+  background: #ffa94d;
+  color: #1c1c1c;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+/* botão "ver todos" */
+.view-all-button {
+  background: #222;
+  color: #fff;
+  border: none;
+  padding: 0.9rem 1.6rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 2rem;
+  transition: background 0.2s ease;
+}
+
+
+.view-all a:hover {
+  background: #ffb84d;
+}
+
+/* responsividade */
+@media (max-width: 900px) {
+  .posts-grid {
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .home-container {
+    padding: 0.5rem;
+  }
+
+  .posts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .view-all-button {
+    width: 90%;
+    font-size: 0.95rem;
+  }
 }

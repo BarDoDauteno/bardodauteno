@@ -5,7 +5,7 @@ const Footer: React.FC = () => {
     return (
         <footer>
             <div className="inner">
-                <p>© {new Date().getFullYear()} Bar do Dauteno — Todos os direitos reservados.</p>
+                <p></p>
             </div>
         </footer>
     )

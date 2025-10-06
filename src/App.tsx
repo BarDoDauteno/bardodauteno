@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import supabase from './utils/supabase'
 
-import Header from './components/Header'
+
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import CreatePost from './pages/CreatePost'
@@ -10,10 +10,14 @@ import PostPage from './pages/PostPage'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
 import { AuthProvider } from './context/AuthContext';
+import AllPosts from './pages/AllPosts'
+import BottomNav from './components/BottomNav';
+
+
 
 export default function App() {
   const [adminEmail, setAdminEmail] = useState<string | null>(null)
-
+  const [user, setUser] = useState<any | null>(null);
   useEffect(() => {
     const checkSession = async () => {
       // Busca a sessão atual
@@ -64,7 +68,6 @@ export default function App() {
   return (
     <AuthProvider>
       <Router basename="/bardodauteno">
-        <Header adminEmail={adminEmail} />
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -73,11 +76,14 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
             <Route path="/login" element={<Login />} />
             <Route path="/create-post" element={<CreatePost />} />
+            <Route path="/all-posts" element={<AllPosts />} />
 
           </Routes>
         </main>
         <Footer />
+        <BottomNav user={user} setUser={setUser} />
       </Router>
+
     </AuthProvider>
   )
 }

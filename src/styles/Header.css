@@ -1,40 +1,115 @@
-/* src/styles/Header.css */
 .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-container .logo a {
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 1.5rem;
-    color: #333;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.6rem;
+  color: #222;
+  transition: color 0.2s ease;
 }
 
+.header-container .logo a:hover {
+  color: #007bff;
+}
+
+/* Navegação desktop */
 .nav-links {
-    list-style: none;
+  list-style: none;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin: 0;
+}
+
+.nav-links li a,
+.nav-links li span,
+.nav-links li button {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.nav-links li button:hover,
+.nav-links li a:hover {
+  color: #007bff;
+}
+
+/* ====== MOBILE ====== */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  gap: 5px;
+}
+
+.menu-toggle span {
+  height: 3px;
+  width: 100%;
+  background: #333;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+
+/* Estado ativo do botão */
+.menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translateY(8px);
+}
+
+.menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translateY(-8px);
+}
+
+/* Menu mobile escondido por padrão */
+.nav-links.mobile {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  padding: 1rem 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Quando o menu mobile está aberto */
+.nav-links.mobile.open {
+  display: flex;
+}
+
+/* Media Query para telas pequenas */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .menu-toggle {
     display: flex;
-    gap: 15px;
-    align-items: center;
-}
-
-.nav-links li a, .nav-links li span, .nav-links li button {
-    text-decoration: none;
-    color: #333;
-    font-weight: 500;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-}
-
-.nav-links li button:hover, .nav-links li a:hover {
-    color: #007bff;
+  }
 }
