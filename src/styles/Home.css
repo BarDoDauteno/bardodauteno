@@ -1,0 +1,128 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #1c1c1c 0%, #2c2c2c 100%);
+  color: #fff;
+  margin: 0;
+  padding: 0;
+}
+
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+
+.banner {
+  text-align: center;
+  margin-bottom: 3rem;
+  background: rgba(255, 140, 0, 0.1);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(255, 140, 0, 0.2);
+}
+
+.banner h1 {
+  font-size: 2.5rem;
+  color: #ffa94d;
+}
+
+.banner p {
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.main-content {
+  display: flex;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.sidebar {
+  width: 250px;
+  padding: 1.5rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(255, 140, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: fit-content;
+}
+
+.sidebar h2 {
+  color: #ffa94d;
+  margin-bottom: 1rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin-bottom: 1rem;
+}
+
+.sidebar a {
+  color: #fff;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.sidebar a:hover {
+  color: #ffa94d;
+}
+
+.glass-box {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+}
+
+.stats {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.login-btn {
+  display: inline-block;
+  margin-top: 1.5rem;
+  background: #ffa94d;
+  color: #1c1c1c;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  text-align: center;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background: #ffb84d;
+}
+
+.user-email {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.loading {
+  text-align: center;
+  margin-top: 3rem;
+  font-size: 1.2rem;
+}

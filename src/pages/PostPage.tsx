@@ -14,8 +14,11 @@ const PostPage: React.FC = () => {
         return (
             <div className="container">
                 <div className="post-page">
+
                     <h2>Post não encontrado</h2>
+
                     <Link to="/">← Voltar</Link>
+                    <h1>oi</h1>
                 </div>
             </div>
         )
@@ -29,6 +32,7 @@ const PostPage: React.FC = () => {
                 {post.image_url && <img src={post.image_url} alt={post.title} className="post-full-image" />}
                 <p>{post.content}</p>
                 <Link to="/" className="back-link">← Voltar</Link>
+
             </div>
         </div>
     )
