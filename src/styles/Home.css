@@ -1,128 +1,133 @@
+
+:root {
+  --bg-start: #1c1c1c;
+  --bg-end: #2c2c2c;
+  --accent: #ffa94d;
+  --glass: rgba(255,255,255,0.08);
+}
+
 body {
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #1c1c1c 0%, #2c2c2c 100%);
+  background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
   color: #fff;
   margin: 0;
   padding: 0;
 }
 
+/* container central */
 .home-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+/* banner */
 .banner {
   text-align: center;
-  margin-bottom: 3rem;
-  background: rgba(255, 140, 0, 0.1);
-  border-radius: 20px;
-  padding: 2rem;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 20px rgba(255, 140, 0, 0.2);
-}
-
-.banner h1 {
-  font-size: 2.5rem;
-  color: #ffa94d;
-}
-
-.banner p {
-  font-size: 1.1rem;
-  opacity: 0.8;
-}
-
-.main-content {
-  display: flex;
-  gap: 2rem;
+  margin-bottom: 2.5rem;
+  background: rgba(255,140,0,0.08);
+  border-radius: 18px;
+  padding: 1.6rem;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(255,140,0,0.08);
   width: 100%;
   max-width: 1200px;
 }
 
-.sidebar {
-  width: 250px;
-  padding: 1.5rem;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(255, 140, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: fit-content;
+.banner h1 {
+  font-size: 2rem;
+  color: var(--accent);
+  margin: 0;
 }
 
-.sidebar h2 {
-  color: #ffa94d;
-  margin-bottom: 1rem;
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar li {
-  margin-bottom: 1rem;
-}
-
-.sidebar a {
-  color: #fff;
-  text-decoration: none;
-  transition: 0.2s;
-}
-
-.sidebar a:hover {
-  color: #ffa94d;
-}
-
-.glass-box {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-}
-
-.stats {
-  margin-top: 2rem;
-  font-size: 0.9rem;
+.banner p {
+  margin: 0.4rem 0 0;
   opacity: 0.85;
 }
 
+/* estrutura principal */
+.main-content {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* sidebar */
+.sidebar {
+  width: 250px;
+  min-width: 200px;
+  padding: 1.2rem;
+  border-radius: 14px;
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-sizing: border-box;
+}
+
+.sidebar h2 { color: var(--accent); margin: 0 0 .6rem 0; }
+.sidebar ul { list-style: none; padding: 0; margin: 0; }
+.sidebar li { margin-bottom: 0.75rem; }
+.sidebar a { color: #fff; text-decoration: none; }
+.sidebar a:hover { color: var(--accent); }
+
+/* stats/login */
+.stats { font-size: 0.9rem; opacity: 0.9; }
 .login-btn {
   display: inline-block;
-  margin-top: 1.5rem;
-  background: #ffa94d;
-  color: #1c1c1c;
-  padding: 0.5rem 1rem;
-  border-radius: 10px;
-  text-align: center;
+  margin-top: 0.5rem;
+  background: var(--accent);
+  color: #1b1b1b;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 700;
   text-decoration: none;
-  font-weight: bold;
-  transition: 0.3s;
 }
 
-.login-btn:hover {
-  background: #ffb84d;
-}
-
-.user-email {
-  font-size: 0.85rem;
-  opacity: 0.8;
-  margin-top: 1.5rem;
-  text-align: center;
-}
-
+/* grid de posts */
 .post-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  flex: 1;
+  gap: 1.25rem;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  /* responsive columns */
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
-.loading {
-  text-align: center;
-  margin-top: 3rem;
-  font-size: 1.2rem;
+/* loading */
+.loading { text-align: center; margin-top: 2rem; color: #fff; }
+
+/* responsividade */
+@media (max-width: 980px) {
+  .sidebar { width: 220px; }
+  .main-content { gap: 1rem; padding: 0 8px; }
+}
+
+@media (max-width: 760px) {
+  .sidebar { 
+    width: 100%; 
+    order: 0; /* força sidebar em cima */
+    margin-bottom: 1rem; /* espaço entre sidebar e grid */
+  }
+  .post-grid { 
+    order: 1; 
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+  }
+  .banner { padding: 1rem; }
+}
+
+@media (max-width: 420px) {
+  .post-grid { grid-template-columns: 1fr; gap: 12px; }
+  .banner h1 { font-size: 1.4rem; }
 }
