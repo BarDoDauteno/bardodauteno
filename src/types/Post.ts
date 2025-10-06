@@ -7,4 +7,6 @@ export interface Post {
     created_at: string;
     updated_at: string;
     trash_votes: number;
+    aura_count: number;
+    likes_count: number;
 }
