@@ -1,0 +1,95 @@
+.create-match-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    background: #1b1b1b;
+    color: #fff;
+    border-radius: 16px;
+    font-family: 'Roboto', sans-serif;
+}
+
+h2 {
+    color: #ff8c42;
+    margin-bottom: 10px;
+}
+
+.team-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.profile-card {
+    width: 120px;
+    padding: 10px;
+    background: #222;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, border 0.2s;
+    border: 2px solid transparent;
+}
+
+.profile-card:hover {
+    transform: translateY(-4px);
+    border-color: #ff8c42;
+}
+
+.profile-card img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 6px;
+    object-fit: cover;
+}
+
+.profile-card.selected.team-red {
+    border: 2px solid #ff3b3f;
+}
+
+.profile-card.selected.team-blue {
+    border: 2px solid #4287ff;
+}
+
+.team-red {
+    color: #ff3b3f;
+}
+
+.team-blue {
+    color: #4287ff;
+}
+
+.winning-team select {
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    background: #333;
+    color: #fff;
+    margin-top: 6px;
+}
+
+.comments-section textarea {
+    width: 100%;
+    min-height: 60px;
+    border-radius: 6px;
+    padding: 6px;
+    border: none;
+    background: #333;
+    color: #fff;
+    resize: vertical;
+}
+
+button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #ff8c42;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #ffa066;
+}

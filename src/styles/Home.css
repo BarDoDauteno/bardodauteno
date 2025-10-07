@@ -158,3 +158,63 @@
     font-size: 0.95rem;
   }
 }
+
+/* Adicione ao Home.css */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+.loading {
+    font-size: 18px;
+    color: #666;
+    text-align: center;
+}
+
+.error-message {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #f44336;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.retry-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+    font-size: 14px;
+}
+
+.retry-btn:hover {
+    background: #d32f2f;
+}
+
+.no-posts {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.create-first-post {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 20px;
+    background: #667eea;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.create-first-post:hover {
+    background: #5a6fd8;
+}

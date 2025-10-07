@@ -1,7 +1,7 @@
 export default function NotFound() {
     return (
         <div>
-            <h1>Testey</h1>
+            <h1>EM CONSTRUCAO</h1>
         </div>
     );
 }

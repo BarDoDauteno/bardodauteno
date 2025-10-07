@@ -11,164 +11,180 @@ type Props = {
 
 const MAX_IMAGES_VISIBLE = 3;
 
+interface PostInteraction {
+    user_id: string;
+    liked: boolean;
+    aurapost: boolean;
+}
+
 const PostCard: React.FC<Props> = ({ post, onDelete }) => {
     const { user } = useAuth();
 
+    const [likesCount, setLikesCount] = useState(0);
+    const [aurapostCount, setAurapostCount] = useState(0);
+    const [userLiked, setUserLiked] = useState(false);
+    const [userAurapost, setUserAurapost] = useState(false);
     const [carouselOpen, setCarouselOpen] = useState(false);
     const [carouselIndex, setCarouselIndex] = useState(0);
 
-    const images: string[] = Array.isArray(post.image_url) ? post.image_url : [];
+    const files: string[] = Array.isArray(post.image_url) ? post.image_url : [];
+    const imageFiles = files.filter(f => /\.(jpg|jpeg|png|gif|webp)$/i.test(f));
+    const videoFiles = files.filter(f => /\.(mp4|webm|ogg)$/i.test(f));
+    const docFiles = files.filter(f => /\.(pdf|docx?|txt)$/i.test(f));
 
-    const [likesCount, setLikesCount] = useState(post.likes_count || 0);
-    const [aurapostCount, setAurapostCount] = useState(post.aura_count || 0);
-    const [userLiked, setUserLiked] = useState(false);
-    const [userAurapost, setUserAurapost] = useState(false);
+    // --- 🔄 Atualiza contagens globais e estado do usuário ---
+    const fetchCounts = async () => {
+        const { data, error } = await supabase
+            .from('PostInteraction')
+            .select('user_id, liked, aurapost')
+            .eq('post_id', post.id);
 
-    // Carrossel
-    const openCarousel = (index: number) => {
-        setCarouselIndex(index);
-        setCarouselOpen(true);
-    };
-    const closeCarousel = () => setCarouselOpen(false);
-    const nextImage = () => setCarouselIndex((p) => (p + 1) % Math.max(images.length, 1));
-    const prevImage = () => setCarouselIndex((p) => (p - 1 + Math.max(images.length, 1)) % Math.max(images.length, 1));
 
-    // Bloqueia scroll quando carrossel aberto
-    useEffect(() => {
-        document.body.classList.toggle('carousel-open', carouselOpen);
-    }, [carouselOpen]);
+        if (!error && data) {
+            const totalLikes = data.filter(d => d.liked).length;
+            const totalAura = data.filter(d => d.aurapost).length;
+            setLikesCount(totalLikes);
+            setAurapostCount(totalAura);
 
-    // Teclado
-    useEffect(() => {
-        const onKey = (e: KeyboardEvent) => {
-            if (!carouselOpen) return;
-            if (e.key === 'Escape') closeCarousel();
-            if (e.key === 'ArrowRight') nextImage();
-            if (e.key === 'ArrowLeft') prevImage();
-        };
-        window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
-    }, [carouselOpen, images.length]);
-
-    // Pega estado do usuário sobre like/aurapost
-    useEffect(() => {
-        if (!user) return;
-        const fetchInteraction = async () => {
-            const { data, error } = await supabase
-                .from('PostInteractions')
-                .select('*')
-                .eq('post_id', post.id)
-                .eq('user_id', user.id)
-                .single();
-            if (!error && data) {
-                setUserLiked(data.liked);
-                setUserAurapost(data.aurapost);
-                setLikesCount(data.likes_count || 0);
-                setAurapostCount(data.aura_count || 0);
+            if (user) {
+                const userData = data.find(d => d.user_id === user.id);
+                setUserLiked(!!userData?.liked);
+                setUserAurapost(!!userData?.aurapost);
             }
-        };
-        fetchInteraction();
-    }, [user, post.id]);
+        }
+    };
 
-    // Toggle like
+    useEffect(() => {
+        fetchCounts();
+
+        // --- 🔴 Realtime subscription ---
+        const channel = supabase
+            .channel(`post-interactions-${post.id}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'PostInteractions', filter: `post_id=eq.${post.id}` }, payload => {
+                fetchCounts(); // Atualiza contagem sempre que houver mudança
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [post.id, user]);
+
+    // --- ❤️ Curtir ---
     const handleLike = async () => {
         if (!user) return alert('Você precisa estar logado para curtir.');
-        try {
-            const newLiked = !userLiked;
-            const newLikesCount = likesCount + (newLiked ? 1 : -1);
 
-            await supabase
-                .from('PostInteractions')
-                .upsert({
-                    post_id: post.id,
-                    user_id: user.id,
-                    liked: newLiked,
-                    likes_count: newLikesCount
-                }, { onConflict: ['post_id', 'user_id'], merge: true });
+        const newLiked = !userLiked;
+        setUserLiked(newLiked);
+        setLikesCount(prev => prev + (newLiked ? 1 : -1));
 
-            setUserLiked(newLiked);
-            setLikesCount(newLikesCount);
-        } catch (err) {
-            console.error('Erro ao curtir post:', err);
-        }
+        const { error } = await supabase.from('PostInteractions').upsert(
+            { post_id: post.id, user_id: user.id, liked: newLiked },
+            { onConflict: ['post_id', 'user_id'] }
+        );
+
+        if (error) console.error('Erro ao curtir:', error);
     };
 
-    // Toggle aurapost
+    // --- ✨ Aurapost ---
     const handleAurapost = async () => {
         if (!user) return alert('Você precisa estar logado para aurapost.');
-        try {
-            const newAurapost = !userAurapost;
-            const newAurapostCount = aurapostCount + (newAurapost ? 1 : -1);
 
-            await supabase
-                .from('PostInteractions')
-                .upsert({
-                    post_id: post.id,
-                    user_id: user.id,
-                    aurapost: newAurapost,
-                    aura_count: newAurapostCount
-                }, { onConflict: ['post_id', 'user_id'], merge: true });
+        const newAurapost = !userAurapost;
+        setUserAurapost(newAurapost);
+        setAurapostCount(prev => prev + (newAurapost ? 1 : -1));
 
-            setUserAurapost(newAurapost);
-            setAurapostCount(newAurapostCount);
-        } catch (err) {
-            console.error('Erro ao aurapost:', err);
-        }
+        const { error } = await supabase.from('PostInteractions').upsert(
+            { post_id: post.id, user_id: user.id, aurapost: newAurapost },
+            { onConflict: ['post_id', 'user_id'] }
+        );
+
+        if (error) console.error('Erro ao aurapost:', error);
     };
+
+    // --- 🖼️ Carrossel ---
+    const openCarousel = (index: number) => { setCarouselIndex(index); setCarouselOpen(true); };
+    const closeCarousel = () => setCarouselOpen(false);
+    const nextImage = () => setCarouselIndex(p => (p + 1) % imageFiles.length);
+    const prevImage = () => setCarouselIndex(p => (p - 1 + imageFiles.length) % imageFiles.length);
 
     return (
         <article className="post-card" aria-live="polite">
             {post.title && <h2 className="post-title">{post.title}</h2>}
             {post.content && <p className="post-content">{post.content}</p>}
 
-            {images.length > 0 && (
-                <div className="post-images" role="list">
-                    {images.slice(0, MAX_IMAGES_VISIBLE).map((url, idx) => {
-                        const isLastVisible = idx === MAX_IMAGES_VISIBLE - 1 && images.length > MAX_IMAGES_VISIBLE;
-                        return (
-                            <div
-                                key={idx}
-                                role="listitem"
-                                className="image-wrapper"
-                                onClick={() => openCarousel(idx)}
-                                tabIndex={0}
-                                aria-label={`Abrir imagem ${idx + 1}`}
-                                onKeyDown={(e) => { if (e.key === 'Enter') openCarousel(idx); }}
-                            >
-                                <img src={url} alt={`Post image ${idx + 1}`} draggable={false} />
-                                {isLastVisible && (
-                                    <div className="more-overlay">+{images.length - MAX_IMAGES_VISIBLE}</div>
-                                )}
-                            </div>
-                        );
-                    })}
+            {/* 🖼️ Imagens */}
+            {imageFiles.length > 0 && (
+                <div className="post-images">
+                    {imageFiles.slice(0, MAX_IMAGES_VISIBLE).map((url, idx) => (
+                        <div key={idx} className="image-wrapper" onClick={() => openCarousel(idx)}>
+                            <img src={url} alt={`Post image ${idx + 1}`} draggable={false} />
+                            {idx === MAX_IMAGES_VISIBLE - 1 && imageFiles.length > MAX_IMAGES_VISIBLE && (
+                                <div className="more-overlay">+{imageFiles.length - MAX_IMAGES_VISIBLE}</div>
+                            )}
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {carouselOpen && (
-                <div className="carousel-overlay" role="dialog" aria-modal="true" onClick={closeCarousel}>
-                    <div className="carousel-bg" />
-                    <div className="carousel-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="carousel-btn prev" onClick={(e) => { e.stopPropagation(); prevImage(); }}>‹</button>
-                        <img className="carousel-image" src={images[carouselIndex]} alt={`Imagem ${carouselIndex + 1} do post`} draggable={false} />
-                        <button className="carousel-btn next" onClick={(e) => { e.stopPropagation(); nextImage(); }}>›</button>
-                        <button className="carousel-close" onClick={(e) => { e.stopPropagation(); closeCarousel(); }}>✕</button>
-                    </div>
+            {/* 🎞️ Vídeos */}
+            {videoFiles.length > 0 && (
+                <div className="post-videos">
+                    {videoFiles.map((url, idx) => (
+                        <video key={idx} controls preload="metadata">
+                            <source src={url} />
+                            Seu navegador não suporta vídeos.
+                        </video>
+                    ))}
                 </div>
             )}
 
-            {onDelete && (
-                <button className="delete-btn" onClick={() => onDelete(post.id)}>Delete</button>
+            {/* 📄 Documentos */}
+            {docFiles.length > 0 && (
+                <div className="post-docs">
+                    {docFiles.map((url, idx) => (
+                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="doc-link">
+                            📄 Documento {idx + 1}
+                        </a>
+                    ))}
+                </div>
             )}
 
+            {/* ❤️✨ Interações */}
             <div className="post-interactions">
-                <button className={`interaction-btn ${userLiked ? 'active' : ''}`} onClick={handleLike}>
+                <button
+                    className={`interaction-btn ${userLiked ? 'active' : ''}`}
+                    onClick={handleLike}
+                    title={userLiked ? 'Você curtiu este post' : 'Curtir'}
+                >
                     ❤️ {likesCount}
                 </button>
-                <button className={`interaction-btn ${userAurapost ? 'active' : ''}`} onClick={handleAurapost}>
+                <button
+                    className={`interaction-btn ${userAurapost ? 'active' : ''}`}
+                    onClick={handleAurapost}
+                    title={userAurapost ? 'Você deu aura neste post' : 'Dar aura'}
+                >
                     ✨ {aurapostCount}
                 </button>
             </div>
+
+            {onDelete && (
+                <button className="delete-btn" onClick={() => onDelete(post.id)}>
+                    Excluir
+                </button>
+            )}
+
+            {/* 🖼️ Carrossel */}
+            {carouselOpen && (
+                <div className="carousel-overlay" onClick={closeCarousel}>
+                    <div className="carousel-content" onClick={e => e.stopPropagation()}>
+                        <button className="carousel-btn prev" onClick={e => { e.stopPropagation(); prevImage(); }}>‹</button>
+                        <img src={imageFiles[carouselIndex]} alt={`Imagem ${carouselIndex + 1}`} className="carousel-image" />
+                        <button className="carousel-btn next" onClick={e => { e.stopPropagation(); nextImage(); }}>›</button>
+                        <button className="carousel-close" onClick={e => { e.stopPropagation(); closeCarousel(); }}>✕</button>
+                    </div>
+                </div>
+            )}
         </article>
     );
 };
