@@ -11,12 +11,6 @@ type Props = {
 
 const MAX_IMAGES_VISIBLE = 3;
 
-interface PostInteraction {
-    user_id: string;
-    liked: boolean;
-    aurapost: boolean;
-}
-
 const PostCard: React.FC<Props> = ({ post, onDelete }) => {
     const { user } = useAuth();
 
@@ -26,43 +20,87 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
     const [userAurapost, setUserAurapost] = useState(false);
     const [carouselOpen, setCarouselOpen] = useState(false);
     const [carouselIndex, setCarouselIndex] = useState(0);
+    const [loading, setLoading] = useState(false);
 
     const files: string[] = Array.isArray(post.image_url) ? post.image_url : [];
     const imageFiles = files.filter(f => /\.(jpg|jpeg|png|gif|webp)$/i.test(f));
     const videoFiles = files.filter(f => /\.(mp4|webm|ogg)$/i.test(f));
     const docFiles = files.filter(f => /\.(pdf|docx?|txt)$/i.test(f));
 
-    // --- 🔄 Atualiza contagens globais e estado do usuário ---
-    const fetchCounts = async () => {
-        const { data, error } = await supabase
-            .from('PostInteraction')
-            .select('user_id, liked, aurapost')
-            .eq('post_id', post.id);
+    // --- 🔄 Busca contagens e estado do usuário ---
+    const fetchInteractions = async () => {
+        try {
 
+            console.log(`🔄 Buscando interações para post ${post.id}`);
 
-        if (!error && data) {
-            const totalLikes = data.filter(d => d.liked).length;
-            const totalAura = data.filter(d => d.aurapost).length;
-            setLikesCount(totalLikes);
-            setAurapostCount(totalAura);
+            // Busca contagens totais
+            const { data: countsData, error: countsError } = await supabase
+                .from('PostInteractions')
+                .select('liked, aurapost')
+                .eq('post_id', post.id);
 
-            if (user) {
-                const userData = data.find(d => d.user_id === user.id);
-                setUserLiked(!!userData?.liked);
-                setUserAurapost(!!userData?.aurapost);
+            if (countsError) {
+                console.error('Erro ao buscar contagens:', countsError);
+                return;
             }
+
+            console.log(`📊 Contagens encontradas:`, countsData);
+            console.log(`📈 Total de registros:`, countsData?.length);
+
+            if (countsData) {
+                const totalLikes = countsData.filter(d => d.liked).length;
+                const totalAura = countsData.filter(d => d.aurapost).length;
+                setLikesCount(totalLikes);
+                setAurapostCount(totalAura);
+                console.log(`❤️ Likes: ${totalLikes}, ✨ Aura: ${totalAura}`);
+            }
+
+            // Busca estado do usuário atual
+            if (user) {
+                console.log(`👤 Buscando interação do usuário ${user.id}`);
+                const { data: userData, error: userError } = await supabase
+                    .from('PostInteractions')
+                    .select('liked, aurapost')
+                    .eq('post_id', post.id)
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (userError && userError.code !== 'PGRST116') { // PGRST116 = nenhum resultado
+                    console.log('ℹ️ Usuário ainda não interagiu com este post');
+                } else if (userData) {
+                    console.log(`✅ Estado do usuário: liked=${userData.liked}, aurapost=${userData.aurapost}`);
+
+                    setUserLiked(userData.liked);
+                    setUserAurapost(userData.aurapost);
+                } else {
+                    setUserLiked(false);
+                    setUserAurapost(false);
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao buscar interações:', error);
         }
     };
 
     useEffect(() => {
-        fetchCounts();
+        fetchInteractions();
 
         // --- 🔴 Realtime subscription ---
         const channel = supabase
             .channel(`post-interactions-${post.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'PostInteractions', filter: `post_id=eq.${post.id}` }, payload => {
-                fetchCounts(); // Atualiza contagem sempre que houver mudança
-            })
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'PostInteractions',
+                    filter: `post_id=eq.${post.id}`
+                },
+                (payload) => {
+                    console.log('Mudança realtime:', payload);
+                    fetchInteractions(); // Atualiza tudo quando houver mudança
+                }
+            )
             .subscribe();
 
         return () => {
@@ -72,41 +110,133 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
 
     // --- ❤️ Curtir ---
     const handleLike = async () => {
-        if (!user) return alert('Você precisa estar logado para curtir.');
+        if (!user) {
+            alert('Você precisa estar logado para curtir.');
+            return;
+        }
 
+        if (loading) return;
+
+        setLoading(true);
         const newLiked = !userLiked;
+
+
+        console.log(`❤️ ${newLiked ? 'Curtindo' : 'Descurtindo'} post ${post.id}`);
+
+        // Otimistic update
         setUserLiked(newLiked);
         setLikesCount(prev => prev + (newLiked ? 1 : -1));
 
-        const { error } = await supabase.from('PostInteractions').upsert(
-            { post_id: post.id, user_id: user.id, liked: newLiked },
-            { onConflict: ['post_id', 'user_id'] }
-        );
+        try {
+            if (newLiked) {
+                // Se está curtindo, upsert com liked=true
+                const { error } = await supabase
+                    .from('PostInteractions')
+                    .upsert(
+                        {
+                            post_id: post.id,
+                            user_id: user.id,
+                            liked: true,
+                            aurapost: userAurapost // Mantém o estado atual do aurapost
+                        },
+                        {
+                            onConflict: 'post_id,user_id'
+                        }
+                    );
 
-        if (error) console.error('Erro ao curtir:', error);
+                if (error) {
+                    console.error('❌ Erro ao curtir:', error);
+                    throw error
+                };
+            } else {
+                // Se está descurtindo, atualiza apenas o liked para false
+                const { error } = await supabase
+                    .from('PostInteractions')
+                    .update({ liked: false })
+                    .eq('post_id', post.id)
+                    .eq('user_id', user.id);
+
+                if (error) throw error;
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar curtida:', error);
+            // Revert optimistic update em caso de erro
+            setUserLiked(!newLiked);
+            setLikesCount(prev => prev + (newLiked ? -1 : 1));
+        } finally {
+            setLoading(false);
+        }
     };
 
     // --- ✨ Aurapost ---
     const handleAurapost = async () => {
-        if (!user) return alert('Você precisa estar logado para aurapost.');
+        if (!user) {
+            alert('Você precisa estar logado para dar aura.');
+            return;
+        }
 
+        if (loading) return;
+
+        setLoading(true);
         const newAurapost = !userAurapost;
+
+        // Otimistic update
         setUserAurapost(newAurapost);
         setAurapostCount(prev => prev + (newAurapost ? 1 : -1));
 
-        const { error } = await supabase.from('PostInteractions').upsert(
-            { post_id: post.id, user_id: user.id, aurapost: newAurapost },
-            { onConflict: ['post_id', 'user_id'] }
-        );
+        try {
+            if (newAurapost) {
+                // Se está dando aura, upsert com aurapost=true
+                const { error } = await supabase
+                    .from('PostInteractions')
+                    .upsert(
+                        {
+                            post_id: post.id,
+                            user_id: user.id,
+                            liked: userLiked, // Mantém o estado atual da curtida
+                            aurapost: true
+                        },
+                        {
+                            onConflict: 'post_id,user_id'
+                        }
+                    );
 
-        if (error) console.error('Erro ao aurapost:', error);
+                if (error) throw error;
+            } else {
+                // Se está removendo aura, atualiza apenas o aurapost para false
+                const { error } = await supabase
+                    .from('PostInteractions')
+                    .update({ aurapost: false })
+                    .eq('post_id', post.id)
+                    .eq('user_id', user.id);
+
+                if (error) throw error;
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar aura:', error);
+            // Revert optimistic update em caso de erro
+            setUserAurapost(!newAurapost);
+            setAurapostCount(prev => prev + (newAurapost ? -1 : 1));
+        } finally {
+            setLoading(false);
+        }
     };
 
     // --- 🖼️ Carrossel ---
-    const openCarousel = (index: number) => { setCarouselIndex(index); setCarouselOpen(true); };
+    const openCarousel = (index: number) => {
+        setCarouselIndex(index);
+        setCarouselOpen(true);
+    };
+
     const closeCarousel = () => setCarouselOpen(false);
-    const nextImage = () => setCarouselIndex(p => (p + 1) % imageFiles.length);
-    const prevImage = () => setCarouselIndex(p => (p - 1 + imageFiles.length) % imageFiles.length);
+
+    const nextImage = () => {
+        setCarouselIndex(prev => (prev + 1) % imageFiles.length);
+    };
+
+    const prevImage = () => {
+        setCarouselIndex(prev => (prev - 1 + imageFiles.length) % imageFiles.length);
+    };
 
     return (
         <article className="post-card" aria-live="polite">
@@ -120,7 +250,9 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
                         <div key={idx} className="image-wrapper" onClick={() => openCarousel(idx)}>
                             <img src={url} alt={`Post image ${idx + 1}`} draggable={false} />
                             {idx === MAX_IMAGES_VISIBLE - 1 && imageFiles.length > MAX_IMAGES_VISIBLE && (
-                                <div className="more-overlay">+{imageFiles.length - MAX_IMAGES_VISIBLE}</div>
+                                <div className="more-overlay">
+                                    +{imageFiles.length - MAX_IMAGES_VISIBLE}
+                                </div>
                             )}
                         </div>
                     ))}
@@ -143,7 +275,13 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
             {docFiles.length > 0 && (
                 <div className="post-docs">
                     {docFiles.map((url, idx) => (
-                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="doc-link">
+                        <a
+                            key={idx}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="doc-link"
+                        >
                             📄 Documento {idx + 1}
                         </a>
                     ))}
@@ -153,24 +291,32 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
             {/* ❤️✨ Interações */}
             <div className="post-interactions">
                 <button
-                    className={`interaction-btn ${userLiked ? 'active' : ''}`}
+                    className={`interaction-btn like-btn ${userLiked ? 'active' : ''} ${loading ? 'loading' : ''}`}
                     onClick={handleLike}
-                    title={userLiked ? 'Você curtiu este post' : 'Curtir'}
+                    disabled={loading}
+                    title={userLiked ? 'Descurtir' : 'Curtir'}
                 >
-                    ❤️ {likesCount}
+                    {userLiked ? '❤️' : '🤍'} {likesCount}
                 </button>
+
                 <button
-                    className={`interaction-btn ${userAurapost ? 'active' : ''}`}
+                    className={`interaction-btn aura-btn ${userAurapost ? 'active' : ''} ${loading ? 'loading' : ''}`}
                     onClick={handleAurapost}
-                    title={userAurapost ? 'Você deu aura neste post' : 'Dar aura'}
+                    disabled={loading}
+                    title={userAurapost ? 'Remover aura' : 'Dar aura'}
                 >
-                    ✨ {aurapostCount}
+                    {userAurapost ? '✨' : '⭐'} {aurapostCount}
                 </button>
             </div>
 
+            {/* 🗑️ Botão de excluir (apenas para admin/owner) */}
             {onDelete && (
-                <button className="delete-btn" onClick={() => onDelete(post.id)}>
-                    Excluir
+                <button
+                    className="delete-btn"
+                    onClick={() => onDelete(post.id)}
+                    title="Excluir post"
+                >
+                    🗑️ Excluir
                 </button>
             )}
 
@@ -178,10 +324,39 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
             {carouselOpen && (
                 <div className="carousel-overlay" onClick={closeCarousel}>
                     <div className="carousel-content" onClick={e => e.stopPropagation()}>
-                        <button className="carousel-btn prev" onClick={e => { e.stopPropagation(); prevImage(); }}>‹</button>
-                        <img src={imageFiles[carouselIndex]} alt={`Imagem ${carouselIndex + 1}`} className="carousel-image" />
-                        <button className="carousel-btn next" onClick={e => { e.stopPropagation(); nextImage(); }}>›</button>
-                        <button className="carousel-close" onClick={e => { e.stopPropagation(); closeCarousel(); }}>✕</button>
+                        <button
+                            className="carousel-btn prev"
+                            onClick={e => { e.stopPropagation(); prevImage(); }}
+                            aria-label="Imagem anterior"
+                        >
+                            ‹
+                        </button>
+
+                        <img
+                            src={imageFiles[carouselIndex]}
+                            alt={`Imagem ${carouselIndex + 1} de ${imageFiles.length}`}
+                            className="carousel-image"
+                        />
+
+                        <button
+                            className="carousel-btn next"
+                            onClick={e => { e.stopPropagation(); nextImage(); }}
+                            aria-label="Próxima imagem"
+                        >
+                            ›
+                        </button>
+
+                        <button
+                            className="carousel-close"
+                            onClick={e => { e.stopPropagation(); closeCarousel(); }}
+                            aria-label="Fechar carrossel"
+                        >
+                            ✕
+                        </button>
+
+                        <div className="carousel-counter">
+                            {carouselIndex + 1} / {imageFiles.length}
+                        </div>
                     </div>
                 </div>
             )}

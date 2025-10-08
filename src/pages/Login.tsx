@@ -16,6 +16,9 @@ export default function Login() {
         setError(null)
 
         try {
+
+
+
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
@@ -38,12 +41,6 @@ export default function Login() {
         }
     }
 
-    const handleMagicLink = async () => {
-        if (!email) return setError('Informe o email para Magic Link')
-        const { error } = await supabase.auth.signInWithOtp({ email })
-        if (error) setError(error.message)
-        else setError('Verifique seu email para entrar com Magic Link')
-    }
 
     return (
         <div className="login-container">
@@ -70,9 +67,7 @@ export default function Login() {
                     </button>
                     {error && <p className="error">{error}</p>}
                 </form>
-                <button onClick={handleMagicLink} className="magic-link-btn">
-                    Entrar com Magic Link
-                </button>
+
             </div>
         </div>
     )
