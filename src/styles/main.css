@@ -16,6 +16,42 @@ body {
   background: linear-gradient(160deg, var(--orange-500), #fff);
   color: var(--text);
   min-height: 100vh;
+  overflow: auto;
+  height: 100%;
+  position: relative;
+}
+
+html, body {
+  overscroll-behavior: none;
+  margin: 0;
+  padding: 0;
+  -webkit-overflow-scrolling: touch;
+}
+/* Garantir que todos os elementos respeitem o overscroll */
+* {
+  overscroll-behavior: none;
+}
+
+/* Para mobile específico */
+@media (max-width: 768px) {
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevenir highlight em toques */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Permitir seleção em inputs e textareas */
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
 }
 
 /* Header fixa com blur */
