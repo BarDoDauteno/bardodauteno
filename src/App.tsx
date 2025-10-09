@@ -15,6 +15,12 @@ import DominoPage from './pages/DominoPage';
 import CreateMatch from './pages/domino/CreateMatch';
 import MatchPage from './pages/domino/MatchPage';
 import Profile from './pages/Profile';
+import JokesPage from './pages/JokesPage';
+import MemoriesPage from './pages/MemoriesPage';
+
+
+
+
 
 export default function App() {
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
@@ -80,10 +86,16 @@ export default function App() {
             <Route path="/post/:id" element={<PostPage />} />
             <Route path="/all-posts" element={<AllPosts />} />
 
+            {/* HomeHeaderNav*/}
+
+            <Route path="/memories" element={<MemoriesPage />} />
+            <Route path="/jokes" element={<JokesPage />} />
+
             {/* Dominó */}
             <Route path="/domino" element={<DominoPage />} />
             <Route path="/domino/create" element={<CreateMatch />} />
             <Route path="/domino/:matchId" element={<MatchPage />} />
+
 
             {/*Perfil*/}
             <Route path="/perfil/:userId" element={<Profile />} />

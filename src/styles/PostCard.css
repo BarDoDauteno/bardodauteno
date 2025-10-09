@@ -88,14 +88,43 @@
     margin-top: 0.5rem;
     justify-content: center;
 }
-
+/* Botões de interação */
 .interaction-btn {
-  background: none;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.2s ease;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.like-btn {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.like-btn.active {
+    background: #ff4757;
+    color: white;
+}
+
+.dislike-btn {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.dislike-btn.active {
+    background: #2f3542;
+    color: white;
+}
+
+.interaction-btn:hover:not(.loading) {
+    transform: scale(1.05);
+}
+
+.interaction-btn.loading {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .interaction-btn:hover {

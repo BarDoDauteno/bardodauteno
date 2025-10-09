@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import type { Post } from '../types/Post';
 import PostCard from '../components/PostCard';
 import '../styles/Home.css';
-import DominoRanking from '../pages/domino/DominoRanking';
 
 type AggregatedPost = Post & {
     likesCount: number;
@@ -13,13 +12,11 @@ type AggregatedPost = Post & {
     commentsCount: number;
 };
 
-type PageType = 'posts' | 'memories' | 'jokes';
-
-export default function Home() {
+export default function MemoriesPage() {
     const [posts, setPosts] = useState<AggregatedPost[]>([]);
     const [loadingPosts, setLoadingPosts] = useState(true);
-    const [activePage, setActivePage] = useState<PageType>('posts');
-    const { user, isAdmin, loading: authLoading } = useAuth();
+    const [activePage, setActivePage] = useState<'posts' | 'memories' | 'jokes'>('memories');
+    const { user: _user, isAdmin, loading: authLoading } = useAuth();
     const location = useLocation();
 
     const getPostWithCounts = async (p: any): Promise<AggregatedPost> => {
@@ -49,31 +46,21 @@ export default function Home() {
         } as AggregatedPost;
     };
 
-    const fetchPosts = async () => {
+    const fetchMemories = async () => {
         setLoadingPosts(true);
         try {
-            let query = supabase
+            const { data: postsData, error: postsError } = await supabase
                 .from('Posts')
                 .select('*')
+                .eq('post_type', 'memories')
                 .order('created_at', { ascending: false });
-
-            // Filtra pelo tipo baseado na página ativa
-            if (activePage === 'memories') {
-                query = query.eq('post_type', 'memories');
-            } else if (activePage === 'jokes') {
-                query = query.eq('post_type', 'jokes');
-            } else {
-                query = query.eq('post_type', 'posts');
-            }
-
-            const { data: postsData, error: postsError } = await query;
 
             if (postsError) throw postsError;
 
             const normalized = await Promise.all((postsData ?? []).map(getPostWithCounts));
             setPosts(normalized);
         } catch (err) {
-            console.error('Erro ao buscar posts:', err);
+            console.error('Erro ao buscar lembranças:', err);
             setPosts([]);
         } finally {
             setLoadingPosts(false);
@@ -81,7 +68,7 @@ export default function Home() {
     };
 
     useEffect(() => {
-        fetchPosts();
+        fetchMemories();
     }, []);
 
     useEffect(() => {
@@ -94,61 +81,11 @@ export default function Home() {
         }
     }, [location.pathname]);
 
-    const renderContent = () => {
-        switch (activePage) {
-            case 'memories':
-                return (
-                    <div className="page-content">
-                        <h2>Lembranças</h2>
-                        <p className="coming-soon">Em breve - suas memórias favoritas aparecerão aqui!</p>
-                    </div>
-                );
-
-            case 'jokes':
-                return (
-                    <div className="page-content">
-                        <h2>Piadas</h2>
-                        <p className="coming-soon">Em breve - as melhores piadas da comunidade!</p>
-                    </div>
-                );
-
-            case 'posts':
-            default:
-                return (
-                    <>
-                        {isAdmin && (
-                            <div className="create-post">
-                                <Link to="/create-post">Criar Novo Post</Link>
-                            </div>
-                        )}
-
-                        <section className="post-grid" aria-live="polite">
-                            {latestPosts.length > 0 ? latestPosts.map(post => (
-                                <PostCard
-                                    key={post.id}
-                                    post={post}
-                                    onDelete={isAdmin ? (id) => setPosts(prev => prev.filter(p => p.id !== id)) : undefined}
-                                />
-                            )) : <p>Nenhum post encontrado.</p>}
-                        </section>
-
-
-                        <div className="view-all">
-                            <Link to="/all-posts">Ver todos os posts</Link>
-                        </div>
-
-                    </>
-                );
-        }
-    };
-
-    if (authLoading || loadingPosts) return <p className="loading">Carregando...</p>;
-
-    const latestPosts = posts.slice(0, 4);
+    if (authLoading || loadingPosts) return <p className="loading">Carregando lembranças...</p>;
 
     return (
         <div className="home-container">
-            {/* Header Navigation - SEMPRE VISÍVEL NO TOPO */}
+            {/* Header Navigation */}
             <nav className="header-nav">
                 <div className="nav-tabs">
                     <Link
@@ -179,16 +116,66 @@ export default function Home() {
                         <li><Link to="/" className={activePage === 'posts' ? 'active' : ''}>Posts</Link></li>
                         <li><Link to="/memories" className={activePage === 'memories' ? 'active' : ''}>Lembranças</Link></li>
                         <li><Link to="/jokes" className={activePage === 'jokes' ? 'active' : ''}>Piadas</Link></li>
+                        <li><Link to="/ranking">Ranking</Link></li>
                         {isAdmin && <li><Link to="/create-post">Criar Post</Link></li>}
                     </ul>
                 </aside>
 
                 <main className="feed">
-                    {renderContent()}
+
+                    {isAdmin && (
+                        <div className="create-post">
+                            <Link to="/create-post">Criar Nova Lembrança</Link>
+                        </div>
+                    )}
+
+                    <section className="post-grid" aria-live="polite">
+                        {posts.length > 0 ? (
+                            posts.map(post => (
+                                <PostCard
+                                    key={post.id}
+                                    post={post}
+                                    onDelete={isAdmin ? (id) => setPosts(prev => prev.filter(p => p.id !== id)) : undefined}
+                                />
+                            ))
+                        ) : (
+                            <div className="no-posts">
+                                <h3>Nenhuma lembrança encontrada</h3>
+                                <p>Seja o primeiro a compartilhar uma memória especial!</p>
+                                {isAdmin && (
+                                    <Link to="/create-post" className="create-first-post">
+                                        Criar Primeira Lembrança
+                                    </Link>
+                                )}
+                            </div>
+                        )}
+                    </section>
                 </main>
 
                 <aside className="ranking glass-box">
-                    <DominoRanking />
+                    <h2>Lembranças Populares</h2>
+                    {posts.length > 0 ? (
+                        <div className="top-posts">
+                            {posts
+                                .sort((a, b) => (b.likesCount + b.aurasCount) - (a.likesCount + a.aurasCount))
+                                .slice(0, 3)
+                                .map((post, index) => (
+                                    <div key={post.id} className="top-post-item">
+                                        <span className="rank-number">{index + 1}</span>
+                                        <div className="post-preview">
+                                            <h4>{post.title || 'Sem título'}</h4>
+                                            <div className="post-stats">
+                                                <span>❤️ {post.likesCount}</span>
+                                                <span>✨ {post.aurasCount}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    ) : (
+                        <p>Nenhuma lembrança ainda</p>
+                    )}
                 </aside>
             </div>
         </div>

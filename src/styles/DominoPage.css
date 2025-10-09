@@ -185,60 +185,86 @@
     transform: translateY(-2px);
 }
 
-/* Container de Estatísticas */
+/* Container de Estatísticas - RESPONSIVO */
 .stats-container {
     background: rgba(255, 255, 255, 0.06);
     border-radius: 16px;
-    padding: 30px;
+    padding: 20px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
+    overflow-x: auto; /* Permite scroll horizontal se necessário */
+    -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
 }
 
 .stats-title {
     color: #ffffff;
-    margin-bottom: 25px;
-    font-size: 1.6rem;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
     text-align: center;
     font-weight: 700;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Tabela de Estatísticas */
+/* Tabela de Estatísticas - RESPONSIVO */
 .stats-table {
     width: 100%;
+    min-width: 320px; /* Largura mínima razoável para mobile */
     border-collapse: collapse;
     background: rgba(255, 255, 255, 0.04);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    table-layout: auto; /* Permite que a tabela ajuste as colunas automaticamente */
 }
 
+/* Garante que as células não quebrem o layout */
+.stats-table th,
+.stats-table td {
+    padding: 8px 12px;
+    text-align: left;
+    white-space: nowrap; /* Evita quebra de linha indesejada */
+    min-width: 60px; /* Largura mínima para células */
+}
+
+/* Estilo opcional para melhorar a visualização em telas pequenas */
+@media (max-width: 600px) {
+    .stats-table {
+        min-width: 100%; /* Garante que a tabela ocupe toda a largura em telas pequenas */
+    }
+
+    .stats-table th,
+    .stats-table td {
+        padding: 6px 8px;
+        font-size: 14px; /* Reduz o tamanho da fonte em telas pequenas */
+    }
+}
 .table-header {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
     backdrop-filter: blur(10px);
 }
 
 .table-header th {
-    padding: 18px 15px;
+    padding: 15px 10px;
     text-align: left;
     color: #ffffff;
     font-weight: 700;
-    font-size: 15px;
+    font-size: 14px;
     border-bottom: 2px solid rgba(255, 255, 255, 0.2);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .position-col {
-    width: 90px;
+    width: 60px;
     text-align: center !important;
 }
 
 .name-col {
     text-align: left;
+    min-width: 120px;
 }
 
 .stats-col {
-    width: 120px;
+    width: 80px;
     text-align: center !important;
 }
 
@@ -247,7 +273,7 @@
     transition: all 0.3s ease;
 }
 
-/* Gradiente de cores para o ranking - Verde para os primeiros até vermelho para os últimos */
+/* Gradiente de cores para o ranking */
 .table-row:nth-child(1) {
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.25), rgba(56, 142, 60, 0.2));
 }
@@ -288,7 +314,6 @@
     background: linear-gradient(135deg, rgba(198, 40, 40, 0.15), rgba(183, 28, 28, 0.1));
 }
 
-/* Para mais de 10 itens, os restantes ficam com cor neutra */
 .table-row:nth-child(n+11) {
     background: rgba(255, 255, 255, 0.03);
 }
@@ -303,10 +328,12 @@
 }
 
 .position-cell, .name-cell, .stats-cell {
-    padding: 16px 15px;
+    padding: 12px 10px;
     color: #ffffff;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .position-cell {
@@ -319,6 +346,10 @@
 .name-cell {
     font-weight: 600;
     color: #ffffff;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .stats-cell {
@@ -336,17 +367,17 @@
 /* Cores especiais para as posições do pódio */
 .table-row:nth-child(1) .position-cell {
     color: #FFD700;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .table-row:nth-child(2) .position-cell {
     color: #C0C0C0;
-    font-size: 15px;
+    font-size: 14px;
 }
 
 .table-row:nth-child(3) .position-cell {
     color: #CD7F32;
-    font-size: 15px;
+    font-size: 14px;
 }
 
 /* Badge para o primeiro lugar */
@@ -362,10 +393,10 @@
     content: "🥉 ";
 }
 
-
+/* ===== RESPONSIVIDADE MOBILE ===== */
 @media (max-width: 768px) {
     .domino-page-container {
-        padding: 10px;
+        padding: 15px 10px;
         padding-bottom: 80px;
     }
 
@@ -373,53 +404,86 @@
         flex-direction: column;
         gap: 15px;
         padding: 15px 10px;
-        margin-bottom: 15px;
-        position: relative;
-        z-index: 1;
+        margin-bottom: 20px;
+        text-align: center;
     }
 
     .domino-header h1 {
-        font-size: 1.4rem;
-        text-align: center;
-        margin: 0;
+        font-size: 1.6rem;
         order: 1;
     }
 
     .create-match-btn {
-        padding: 10px 16px;
-        font-size: 0.9rem;
+        padding: 12px 20px;
+        font-size: 0.95rem;
         order: 2;
         width: 100%;
-        text-align: center;
+        max-width: 280px;
     }
 
-    /* Garantir que os filtros fiquem visíveis */
     .view-controls {
-        margin-top: 0;
+        flex-direction: column;
+        gap: 12px;
+        padding: 15px;
         margin-bottom: 20px;
-        padding: 15px 12px;
-        position: relative;
-        z-index: 2;
     }
 
-    .filter-section, .sort-section {
-        gap: 10px;
+    /* Stats Container Mobile */
+    .stats-container {
+        padding: 15px;
+        margin: 0 -5px; /* Compensa o padding do container pai */
+        border-radius: 12px;
     }
 
-    .filter-title {
-        font-size: 0.9rem;
-        margin-bottom: 5px;
+    .stats-title {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
     }
 
-    .filter-buttons {
-        gap: 8px;
+    /* Tabela Mobile Otimizada */
+    .stats-table {
+        min-width: 280px;
+        font-size: 13px;
     }
 
-    .filter-btn {
-        padding: 10px 12px;
-        font-size: 0.8rem;
-        min-width: 110px;
-        flex: 1;
+    .table-header th {
+        padding: 12px 8px;
+        font-size: 12px;
+    }
+
+    .position-col {
+        width: 50px;
+    }
+
+    .stats-col {
+        width: 70px;
+    }
+
+    .position-cell, .name-cell, .stats-cell {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+
+    .name-cell {
+        max-width: 100px;
+        font-size: 12px;
+    }
+
+    /* Esconder cabeçalhos menos importantes em mobile muito pequeno */
+    @media (max-width: 380px) {
+        .table-header th:nth-child(4),
+        .table-header th:nth-child(5) {
+            display: none;
+        }
+        
+        .table-row td:nth-child(4),
+        .table-row td:nth-child(5) {
+            display: none;
+        }
+        
+        .stats-col {
+            width: 60px;
+        }
     }
 }
 
@@ -430,12 +494,13 @@
     }
 
     .domino-header h1 {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
     }
 
     .create-match-btn {
-        padding: 8px 12px;
-        font-size: 0.85rem;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        max-width: 250px;
     }
 
     .view-controls {
@@ -443,13 +508,89 @@
         margin-bottom: 15px;
     }
 
-    .filter-btn {
-        padding: 8px 10px;
-        font-size: 0.75rem;
-        min-width: 100px;
+    .stats-container {
+        padding: 12px 8px;
     }
 
-    .filter-title {
-        font-size: 0.85rem;
+    .stats-title {
+        font-size: 1.1rem;
+    }
+
+    /* Layout de cartão para mobile muito pequeno */
+    @media (max-width: 360px) {
+        .stats-table {
+            display: block;
+            background: transparent;
+            box-shadow: none;
+        }
+        
+        .table-header {
+            display: none;
+        }
+        
+        .table-row {
+            display: block;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        
+        .table-row td {
+            display: block;
+            text-align: center !important;
+            padding: 5px 0;
+            border: none;
+        }
+        
+        .position-cell {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .name-cell {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            max-width: none;
+            white-space: normal;
+        }
+        
+        .stats-cell {
+            display: inline-block;
+            width: 33%;
+            font-size: 12px;
+        }
+        
+        .stats-cell::before {
+            content: attr(data-label);
+            display: block;
+            font-size: 10px;
+            color: #bbbbbb;
+            margin-bottom: 2px;
+        }
+    }
+}
+
+/* Melhorias para tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .domino-page-container {
+        padding: 20px 15px;
+    }
+    
+    .stats-container {
+        padding: 20px;
+    }
+    
+    .table-header th {
+        padding: 15px 12px;
+        font-size: 13px;
+    }
+    
+    .position-cell, .name-cell, .stats-cell {
+        padding: 12px 10px;
+        font-size: 13px;
     }
 }

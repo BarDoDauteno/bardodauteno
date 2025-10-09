@@ -36,7 +36,7 @@ export default function DominoPage() {
     const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);
     const [duoStats, setDuoStats] = useState<DuoStats[]>([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<ViewMode>('matches');
+    const [viewMode, setViewMode] = useState<ViewMode>('playerStats');
     const [sortBy, setSortBy] = useState<'wins' | 'winRate'>('wins');
 
     // Função para remover @gmail.com dos nomes

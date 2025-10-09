@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../utils/supabase";
 import type { Post } from "../types/Post";
 import PostCard from "../components/PostCard";
@@ -6,17 +6,20 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/AllPosts.css";
 
 type AggregatedPost = Post & {
-    likesCount: number;
+    moggedCount: number;
     aurasCount: number;
     commentsCount: number;
 };
+
+type FilterType = "recent" | "mogged" | "auras" | "comments";
 
 export default function AllPosts() {
     const [posts, setPosts] = useState<AggregatedPost[]>([]);
     const [filteredPosts, setFilteredPosts] = useState<AggregatedPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const [sortBy, setSortBy] = useState("recent");
+    const [sortBy, setSortBy] = useState<FilterType>("recent");
+    const [showSearch, setShowSearch] = useState(false);
     const { isAdmin } = useAuth();
 
     const getPostWithCounts = async (p: any): Promise<AggregatedPost> => {
@@ -26,12 +29,13 @@ export default function AllPosts() {
                 ? [p.image_url]
                 : [];
 
+        // Busca interações baseado na sua tabela real
         const { data: interactions } = await supabase
             .from("PostInteractions")
-            .select("liked, aurapost")
+            .select("mogged, aurapost")
             .eq("post_id", p.id);
 
-        const likesCount = interactions?.filter((i) => i.liked).length ?? 0;
+        const moggedCount = interactions?.filter((i) => i.mogged).length ?? 0;
         const aurasCount = interactions?.filter((i) => i.aurapost).length ?? 0;
 
         const { data: comments } = await supabase
@@ -41,7 +45,13 @@ export default function AllPosts() {
 
         const commentsCount = comments?.length ?? 0;
 
-        return { ...p, image_url: images, likesCount, aurasCount, commentsCount };
+        return {
+            ...p,
+            image_url: images,
+            moggedCount,
+            aurasCount,
+            commentsCount
+        };
     };
 
     const fetchAllPosts = async () => {
@@ -86,10 +96,10 @@ export default function AllPosts() {
             );
         }
 
-        // Ordenação
+        // Ordenação baseada nas colunas reais
         switch (sortBy) {
-            case "likes":
-                results.sort((a, b) => b.likesCount - a.likesCount);
+            case "mogged":
+                results.sort((a, b) => b.moggedCount - a.moggedCount);
                 break;
             case "auras":
                 results.sort((a, b) => b.aurasCount - a.aurasCount);
@@ -97,7 +107,7 @@ export default function AllPosts() {
             case "comments":
                 results.sort((a, b) => b.commentsCount - a.commentsCount);
                 break;
-            default:
+            default: // "recent"
                 results.sort(
                     (a, b) =>
                         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -107,32 +117,65 @@ export default function AllPosts() {
         setFilteredPosts(results);
     }, [search, sortBy, posts]);
 
+    const filterButtons = [
+        { value: "recent" as FilterType, label: "Recentes", icon: "🕒" },
+        { value: "mogged" as FilterType, label: "Mogged", icon: "😠" },
+        { value: "auras" as FilterType, label: "Aura", icon: "✨" },
+        { value: "comments" as FilterType, label: "Comentários", icon: "💬" },
+    ];
+
     if (loading) return <p className="loading">Carregando posts...</p>;
 
     return (
         <div className="all-posts-container">
             <header className="all-posts-header">
-                <h2>📰 Todos os Posts</h2>
 
-                <div className="filters">
-                    <input
-                        type="text"
-                        placeholder="Buscar por título ou conteúdo..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="search-input"
-                    />
 
-                    <select
-                        className="sort-select"
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                    >
-                        <option value="recent">Mais recentes</option>
-                        <option value="likes">Mais curtidos</option>
-                        <option value="auras">Mais aura</option>
-                        <option value="comments">Mais comentados</option>
-                    </select>
+                <div className="filters-container">
+                    {/* Botão de busca móvel */}
+                    <div className="mobile-search-toggle">
+                        <button
+                            className={`search-toggle-btn ${showSearch ? 'active' : ''}`}
+                            onClick={() => setShowSearch(!showSearch)}
+                        >
+                            🔍
+                        </button>
+                    </div>
+
+                    {/* Campo de busca */}
+                    <div className={`search-section ${showSearch ? 'show' : ''}`}>
+                        <div className="search-input-wrapper">
+                            <input
+                                type="text"
+                                placeholder="Buscar posts..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="search-input"
+                            />
+                            {search && (
+                                <button
+                                    className="clear-search"
+                                    onClick={() => setSearch('')}
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Filtros de ordenação */}
+                    <div className="sort-filters">
+                        {filterButtons.map((filter) => (
+                            <button
+                                key={filter.value}
+                                className={`filter-btn ${sortBy === filter.value ? 'active' : ''}`}
+                                onClick={() => setSortBy(filter.value)}
+                            >
+                                <span className="filter-icon">{filter.icon}</span>
+                                <span className="filter-label">{filter.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </header>
 
@@ -144,13 +187,29 @@ export default function AllPosts() {
                             post={post}
                             onDelete={
                                 isAdmin
-                                    ? (id) => setFilteredPosts((prev) => prev.filter((p) => p.id !== id))
+                                    ? (id) => {
+                                        setFilteredPosts((prev) => prev.filter((p) => p.id !== id));
+                                        setPosts((prev) => prev.filter((p) => p.id !== id));
+                                    }
                                     : undefined
                             }
                         />
                     ))
                 ) : (
-                    <p className="no-results">Nenhum post encontrado.</p>
+                    <div className="no-results">
+                        <p>📭 Nenhum post encontrado</p>
+                        {search && (
+                            <button
+                                className="clear-filters"
+                                onClick={() => {
+                                    setSearch('');
+                                    setSortBy('recent');
+                                }}
+                            >
+                                Limpar filtros
+                            </button>
+                        )}
+                    </div>
                 )}
             </section>
         </div>

@@ -14,9 +14,9 @@ const MAX_IMAGES_VISIBLE = 3;
 const PostCard: React.FC<Props> = ({ post, onDelete }) => {
     const { user } = useAuth();
 
-    const [likesCount, setLikesCount] = useState(0);
+    const [moggedCount, setMoggedCount] = useState(0);
     const [aurapostCount, setAurapostCount] = useState(0);
-    const [userLiked, setUserLiked] = useState(false);
+    const [userMogged, setUserMogged] = useState(false);
     const [userAurapost, setUserAurapost] = useState(false);
     const [carouselOpen, setCarouselOpen] = useState(false);
     const [carouselIndex, setCarouselIndex] = useState(0);
@@ -31,12 +31,11 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
     const fetchInteractions = async () => {
         try {
 
-            console.log(`🔄 Buscando interações para post ${post.id}`);
 
             // Busca contagens totais
             const { data: countsData, error: countsError } = await supabase
                 .from('PostInteractions')
-                .select('liked, aurapost')
+                .select('mogged, aurapost')
                 .eq('post_id', post.id);
 
             if (countsError) {
@@ -44,41 +43,33 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
                 return;
             }
 
-            console.log(`📊 Contagens encontradas:`, countsData);
-            console.log(`📈 Total de registros:`, countsData?.length);
-
             if (countsData) {
-                const totalLikes = countsData.filter(d => d.liked).length;
+                const totalMogged = countsData.filter(d => d.mogged).length;
                 const totalAura = countsData.filter(d => d.aurapost).length;
-                setLikesCount(totalLikes);
+                setMoggedCount(totalMogged);
                 setAurapostCount(totalAura);
-                console.log(`❤️ Likes: ${totalLikes}, ✨ Aura: ${totalAura}`);
             }
 
             // Busca estado do usuário atual
             if (user) {
-                console.log(`👤 Buscando interação do usuário ${user.id}`);
                 const { data: userData, error: userError } = await supabase
                     .from('PostInteractions')
-                    .select('liked, aurapost')
+                    .select('mogged, aurapost')
                     .eq('post_id', post.id)
                     .eq('user_id', user.id)
                     .single();
 
-                if (userError && userError.code !== 'PGRST116') { // PGRST116 = nenhum resultado
-                    console.log('ℹ️ Usuário ainda não interagiu com este post');
+                if (userError && userError.code !== 'PGRST116') {
+                    console.error('❌ Erro ao buscar interação do usuário:', userError);
                 } else if (userData) {
-                    console.log(`✅ Estado do usuário: liked=${userData.liked}, aurapost=${userData.aurapost}`);
-
-                    setUserLiked(userData.liked);
+                    setUserMogged(userData.mogged);
                     setUserAurapost(userData.aurapost);
                 } else {
-                    setUserLiked(false);
+                    setUserMogged(false);
                     setUserAurapost(false);
                 }
             }
         } catch (error) {
-            console.error('Erro ao buscar interações:', error);
         }
     };
 
@@ -98,7 +89,7 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
                 },
                 (payload) => {
                     console.log('Mudança realtime:', payload);
-                    fetchInteractions(); // Atualiza tudo quando houver mudança
+                    fetchInteractions();
                 }
             )
             .subscribe();
@@ -108,35 +99,36 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
         };
     }, [post.id, user]);
 
-    // --- ❤️ Curtir ---
-    const handleLike = async () => {
+    // --- 👎 Moggar/Desmoggar (agora como dislike comum) ---
+    const handleMog = async () => {
         if (!user) {
-            alert('Você precisa estar logado para curtir.');
+            alert('Você precisa estar logado para dar dislike.');
             return;
         }
 
         if (loading) return;
 
         setLoading(true);
-        const newLiked = !userLiked;
+        const newMogged = !userMogged;
 
-
-        console.log(`❤️ ${newLiked ? 'Curtindo' : 'Descurtindo'} post ${post.id}`);
 
         // Otimistic update
-        setUserLiked(newLiked);
-        setLikesCount(prev => prev + (newLiked ? 1 : -1));
+        const previousMogged = userMogged;
+        const previousCount = moggedCount;
+
+        setUserMogged(newMogged);
+        setMoggedCount(prev => prev + (newMogged ? 1 : -1));
 
         try {
-            if (newLiked) {
-                // Se está curtindo, upsert com liked=true
+            if (newMogged) {
+                // Adicionando dislike - usa upsert para criar ou atualizar
                 const { error } = await supabase
                     .from('PostInteractions')
                     .upsert(
                         {
                             post_id: post.id,
                             user_id: user.id,
-                            liked: true,
+                            mogged: true,
                             aurapost: userAurapost // Mantém o estado atual do aurapost
                         },
                         {
@@ -144,34 +136,31 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
                         }
                     );
 
-                if (error) {
-                    console.error('❌ Erro ao curtir:', error);
-                    throw error
-                };
+                if (error) throw error;
             } else {
-                // Se está descurtindo, atualiza apenas o liked para false
+                // Removendo dislike - atualiza apenas o mogged para false
                 const { error } = await supabase
                     .from('PostInteractions')
-                    .update({ liked: false })
+                    .update({ mogged: false })
                     .eq('post_id', post.id)
                     .eq('user_id', user.id);
 
                 if (error) throw error;
             }
         } catch (error) {
-            console.error('Erro ao atualizar curtida:', error);
+            console.error('💥 Erro ao atualizar dislike:', error);
             // Revert optimistic update em caso de erro
-            setUserLiked(!newLiked);
-            setLikesCount(prev => prev + (newLiked ? -1 : 1));
+            setUserMogged(previousMogged);
+            setMoggedCount(previousCount);
         } finally {
             setLoading(false);
         }
     };
 
-    // --- ✨ Aurapost ---
+    // --- ✨ Aurapost (like) ---
     const handleAurapost = async () => {
         if (!user) {
-            alert('Você precisa estar logado para dar aura.');
+            alert('Você precisa estar logado para dar like.');
             return;
         }
 
@@ -181,19 +170,22 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
         const newAurapost = !userAurapost;
 
         // Otimistic update
+        const previousAurapost = userAurapost;
+        const previousCount = aurapostCount;
+
         setUserAurapost(newAurapost);
         setAurapostCount(prev => prev + (newAurapost ? 1 : -1));
 
         try {
             if (newAurapost) {
-                // Se está dando aura, upsert com aurapost=true
+                // Adicionando like
                 const { error } = await supabase
                     .from('PostInteractions')
                     .upsert(
                         {
                             post_id: post.id,
                             user_id: user.id,
-                            liked: userLiked, // Mantém o estado atual da curtida
+                            mogged: userMogged, // Mantém o estado atual do dislike
                             aurapost: true
                         },
                         {
@@ -202,8 +194,9 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
                     );
 
                 if (error) throw error;
+                console.log('✅ Like registrado no Supabase');
             } else {
-                // Se está removendo aura, atualiza apenas o aurapost para false
+                // Removendo like
                 const { error } = await supabase
                     .from('PostInteractions')
                     .update({ aurapost: false })
@@ -211,18 +204,19 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
                     .eq('user_id', user.id);
 
                 if (error) throw error;
+                console.log('✅ Like removido no Supabase');
             }
         } catch (error) {
-            console.error('Erro ao atualizar aura:', error);
+            console.error('💥 Erro ao atualizar like:', error);
             // Revert optimistic update em caso de erro
-            setUserAurapost(!newAurapost);
-            setAurapostCount(prev => prev + (newAurapost ? -1 : 1));
+            setUserAurapost(previousAurapost);
+            setAurapostCount(previousCount);
         } finally {
             setLoading(false);
         }
     };
 
-    // --- 🖼️ Carrossel ---
+    // --- 🖼️ Carrossel (mantido igual) ---
     const openCarousel = (index: number) => {
         setCarouselIndex(index);
         setCarouselOpen(true);
@@ -288,24 +282,24 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
                 </div>
             )}
 
-            {/* ❤️✨ Interações */}
+            {/* 👎✨ Interações (agora Like/Dislike) */}
             <div className="post-interactions">
                 <button
-                    className={`interaction-btn like-btn ${userLiked ? 'active' : ''} ${loading ? 'loading' : ''}`}
-                    onClick={handleLike}
+                    className={`interaction-btn like-btn ${userAurapost ? 'active' : ''} ${loading ? 'loading' : ''}`}
+                    onClick={handleAurapost}
                     disabled={loading}
-                    title={userLiked ? 'Descurtir' : 'Curtir'}
+                    title={userAurapost ? 'Remover like' : 'Curtir'}
                 >
-                    {userLiked ? '❤️' : '🤍'} {likesCount}
+                    {userAurapost ? '✨' : '⭐'} {aurapostCount}
                 </button>
 
                 <button
-                    className={`interaction-btn aura-btn ${userAurapost ? 'active' : ''} ${loading ? 'loading' : ''}`}
-                    onClick={handleAurapost}
+                    className={`interaction-btn dislike-btn ${userMogged ? 'active' : ''} ${loading ? 'loading' : ''}`}
+                    onClick={handleMog}
                     disabled={loading}
-                    title={userAurapost ? 'Remover aura' : 'Dar aura'}
+                    title={userMogged ? 'Remover dislike' : 'Não curtir'}
                 >
-                    {userAurapost ? '✨' : '⭐'} {aurapostCount}
+                    {userMogged ? '🗑️' : '🗑️'} {moggedCount}
                 </button>
             </div>
 
@@ -320,7 +314,7 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
                 </button>
             )}
 
-            {/* 🖼️ Carrossel */}
+            {/* 🖼️ Carrossel (mantido igual) */}
             {carouselOpen && (
                 <div className="carousel-overlay" onClick={closeCarousel}>
                     <div className="carousel-content" onClick={e => e.stopPropagation()}>

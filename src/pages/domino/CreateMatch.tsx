@@ -124,8 +124,8 @@ export default function CreateMatch() {
 
     return (
         <div className="create-match-container">
-            <h2>Criar partida de dominó</h2>
-            <p>Selecione até 4 jogadores: os 2 primeiros serão o Time Vermelho, os 2 últimos o Time Azul.</p>
+            <h2>Criar Partida de</h2>
+            <p>Os 2 primeiros serão o Time Vermelho</p>
 
             <form onSubmit={handleSubmit}>
                 <div className="team-cards">
@@ -143,11 +143,29 @@ export default function CreateMatch() {
 
                 <div className="winning-team">
                     <label>Vencedor:</label>
-                    <select value={winningTeam ?? 0} onChange={(e) => setWinningTeam(Number(e.target.value))}>
-                        <option value={0}>Sem resultado / empate</option>
-                        <option value={1}>Vermelho</option>
-                        <option value={2}>Azul</option>
-                    </select>
+                    <div className="team-buttons">
+                        <button
+                            className={winningTeam === 0 ? 'selected' : ''}
+                            onClick={() => setWinningTeam(0)}
+                            style={{ backgroundColor: '#808080', color: 'white' }}
+                        >
+                            Sem resultado / empate
+                        </button>
+                        <button
+                            className={winningTeam === 1 ? 'selected' : ''}
+                            onClick={() => setWinningTeam(1)}
+                            style={{ backgroundColor: '#ff4d4d', color: 'white' }}
+                        >
+                            Vermelho
+                        </button>
+                        <button
+                            className={winningTeam === 2 ? 'selected' : ''}
+                            onClick={() => setWinningTeam(2)}
+                            style={{ backgroundColor: '#4d4dff', color: 'white' }}
+                        >
+                            Azul
+                        </button>
+                    </div>
                 </div>
 
                 <div className="comments-section">

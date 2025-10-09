@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase from '../utils/supabase';
@@ -13,6 +12,8 @@ type Preview = {
     size: number;
 };
 
+type PostType = 'posts' | 'memories' | 'jokes';
+
 export default function CreatePost() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -23,21 +24,20 @@ export default function CreatePost() {
     const [content, setContent] = useState('');
     const [files, setFiles] = useState<File[]>([]);
     const [previews, setPreviews] = useState<Preview[]>([]);
+    const [postType, setPostType] = useState<PostType>('posts');
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const MAX_FILES = 10;
-    const BUCKET = 'posts-images'; // usar bucket existente; troque se preferir outro bucket
+    const BUCKET = 'posts-images';
 
     useEffect(() => {
         if (!user) navigate('/login');
     }, [user, navigate]);
 
-    // função utilitária para criar id unico
     const makeId = () =>
         `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
-    // formata bytes legíveis
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return '0 B';
         const k = 1024;
@@ -46,7 +46,6 @@ export default function CreatePost() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    // quando usuário seleciona arquivos — append (não substitui)
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newFiles = Array.from(e.target.files || []);
         if (files.length + newFiles.length > MAX_FILES) {
@@ -54,7 +53,6 @@ export default function CreatePost() {
             return;
         }
 
-        // criar previews para os novos arquivos
         const newPreviews = newFiles.map((f) => ({
             id: makeId(),
             url: URL.createObjectURL(f),
@@ -67,18 +65,11 @@ export default function CreatePost() {
         setPreviews((prev) => [...prev, ...newPreviews]);
         setError(null);
 
-        // opcional: limpa o value do input para permitir re-selecionar o mesmo arquivo depois
         if (inputRef.current) inputRef.current.value = '';
     };
 
-    // remove arquivo (por índice)
     const handleRemoveFile = (index: number) => {
-        setFiles((prev) => {
-            const removed = prev[index];
-            // nada especial a fazer com removed além de atualizar o estado
-            return prev.filter((_, i) => i !== index);
-        });
-
+        setFiles((prev) => prev.filter((_, i) => i !== index));
         setPreviews((prev) => {
             const removed = prev[index];
             if (removed) {
@@ -92,7 +83,6 @@ export default function CreatePost() {
         });
     };
 
-    // cleanup — revogar objectURLs quando componente desmonta
     useEffect(() => {
         return () => {
             previews.forEach((p) => {
@@ -122,7 +112,7 @@ export default function CreatePost() {
         try {
             const uploadedUrls: string[] = [];
 
-            // subir arquivos um a um (sequencial). Se preferir paralelizar, usar Promise.all
+            // Upload de arquivos
             for (const file of files) {
                 const safeName = file.name.replace(/\s+/g, '_');
                 const filePath = `${user.id}/${Date.now()}_${safeName}`;
@@ -133,25 +123,24 @@ export default function CreatePost() {
 
                 if (uploadError) throw uploadError;
 
-                // getPublicUrl é síncrono na SDK v2 (retorna objeto com data.publicUrl)
                 const { data } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
                 const publicUrl = (data as any)?.publicUrl ?? (data as any)?.public_url;
 
                 if (!publicUrl) {
-                    // fallback gerado (caso raro) — tente construir URL pública padrão (opcional)
                     throw new Error('Não foi possível obter a URL pública do arquivo.');
                 }
 
                 uploadedUrls.push(publicUrl);
             }
 
-            // inserir post com array de URLs
+            // Inserir post com o tipo específico
             const { error: insertError } = await supabase.from('Posts').insert([
                 {
                     title,
                     excerpt,
                     content,
-                    image_url: uploadedUrls, // armazena array diretamente (text[])
+                    image_url: uploadedUrls,
+                    post_type: postType, // Nova coluna
                     user_email: user.email,
                     user_id: user.id,
                     created_at: new Date(),
@@ -161,7 +150,7 @@ export default function CreatePost() {
 
             if (insertError) throw insertError;
 
-            // revoke previews e resetar campos
+            // Limpar formulário
             previews.forEach((p) => {
                 try {
                     URL.revokeObjectURL(p.url);
@@ -173,8 +162,11 @@ export default function CreatePost() {
             setContent('');
             setFiles([]);
             setPreviews([]);
+            setPostType('posts');
             if (inputRef.current) inputRef.current.value = '';
-            navigate('/');
+
+            // Redirecionar para a página correspondente ao tipo de post
+            navigate(postType === 'posts' ? '/' : `/${postType}`);
         } catch (err: any) {
             console.error(err);
             setError(err?.message ?? 'Erro ao criar post.');
@@ -188,6 +180,34 @@ export default function CreatePost() {
             <div className="create-post-box glass-box">
                 <h2>Criar Post</h2>
                 <form onSubmit={handleSubmit}>
+                    {/* Seletor de Tipo de Post */}
+                    <div className="post-type-selector">
+                        <label>Tipo de Post:</label>
+                        <div className="type-options">
+                            <button
+                                type="button"
+                                className={`type-option ${postType === 'posts' ? 'active' : ''}`}
+                                onClick={() => setPostType('posts')}
+                            >
+                                Posts
+                            </button>
+                            <button
+                                type="button"
+                                className={`type-option ${postType === 'memories' ? 'active' : ''}`}
+                                onClick={() => setPostType('memories')}
+                            >
+                                Lembranças
+                            </button>
+                            <button
+                                type="button"
+                                className={`type-option ${postType === 'jokes' ? 'active' : ''}`}
+                                onClick={() => setPostType('jokes')}
+                            >
+                                Piadas
+                            </button>
+                        </div>
+                    </div>
+
                     <input
                         type="text"
                         placeholder="Título"
@@ -210,7 +230,7 @@ export default function CreatePost() {
                     />
                     <div className="char-count">{content.length}/280</div>
 
-                    {/* previews */}
+                    {/* Previews */}
                     <div className="file-preview-grid">
                         {previews.map((p, i) => (
                             <div key={p.id} className="file-preview-card">
