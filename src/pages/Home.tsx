@@ -16,7 +16,8 @@ type AggregatedPost = Post & {
 type PageType = 'posts' | 'memories' | 'jokes';
 
 export default function Home() {
-    const [posts, setPosts] = useState<AggregatedPost[]>([]);
+    const [regularPosts, setRegularPosts] = useState<AggregatedPost[]>([]);
+    const [pinnedPost, setPinnedPost] = useState<AggregatedPost | null>(null);
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [activePage, setActivePage] = useState<PageType>('posts');
     const { user, isAdmin, loading: authLoading } = useAuth();
@@ -55,6 +56,7 @@ export default function Home() {
             let query = supabase
                 .from('Posts')
                 .select('*')
+                .order('is_pinned', { ascending: false }) // Posts fixos primeiro
                 .order('created_at', { ascending: false });
 
             // Filtra pelo tipo baseado na página ativa
@@ -71,10 +73,19 @@ export default function Home() {
             if (postsError) throw postsError;
 
             const normalized = await Promise.all((postsData ?? []).map(getPostWithCounts));
-            setPosts(normalized);
+
+            // Separar posts fixos dos regulares
+            const pinnedPosts = normalized.filter(post => post.is_pinned);
+            const regularPostsList = normalized.filter(post => !post.is_pinned);
+
+            // Pega apenas o primeiro post fixo (ou pode mostrar vários)
+            setPinnedPost(pinnedPosts[0] || null);
+            setRegularPosts(regularPostsList);
+
         } catch (err) {
             console.error('Erro ao buscar posts:', err);
-            setPosts([]);
+            setPinnedPost(null);
+            setRegularPosts([]);
         } finally {
             setLoadingPosts(false);
         }
@@ -82,7 +93,7 @@ export default function Home() {
 
     useEffect(() => {
         fetchPosts();
-    }, []);
+    }, [activePage]);
 
     useEffect(() => {
         if (location.pathname === '/memories') {
@@ -114,6 +125,8 @@ export default function Home() {
 
             case 'posts':
             default:
+                const latestRegularPosts = regularPosts.slice(0, 4);
+
                 return (
                     <>
                         {isAdmin && (
@@ -122,29 +135,42 @@ export default function Home() {
                             </div>
                         )}
 
+                        {/* POST FIXO */}
+                        {pinnedPost && (
+                            <div className="pinned-post-section">
+                                <div className="pinned-label">📌 Post Fixado</div>
+                                <PostCard
+                                    key={`pinned-${pinnedPost.id}`}
+                                    post={pinnedPost}
+                                    onDelete={isAdmin ? (id) => {
+                                        setPinnedPost(null);
+                                        setRegularPosts(prev => prev.filter(p => p.id !== id));
+                                    } : undefined}
+                                />
+                            </div>
+                        )}
+
                         <section className="post-grid" aria-live="polite">
-                            {latestPosts.length > 0 ? latestPosts.map(post => (
+                            {latestRegularPosts.map(post => (
                                 <PostCard
                                     key={post.id}
                                     post={post}
-                                    onDelete={isAdmin ? (id) => setPosts(prev => prev.filter(p => p.id !== id)) : undefined}
+                                    onDelete={isAdmin ? (id) => setRegularPosts(prev => prev.filter(p => p.id !== id)) : undefined}
                                 />
-                            )) : <p>Nenhum post encontrado.</p>}
-                        </section>
+                            ))}
 
+                            {latestRegularPosts.length === 0 && !pinnedPost && <p>Nenhum post encontrado.</p>}
+                        </section>
 
                         <div className="view-all">
                             <Link to="/all-posts">Ver todos os posts</Link>
                         </div>
-
                     </>
                 );
         }
     };
 
     if (authLoading || loadingPosts) return <p className="loading">Carregando...</p>;
-
-    const latestPosts = posts.slice(0, 4);
 
     return (
         <div className="home-container">

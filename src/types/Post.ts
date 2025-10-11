@@ -9,4 +9,5 @@ export interface Post {
     trash_votes: number;
     aura_count: number;
     likes_count: number;
+    is_pinned: boolean;
 }
