@@ -18,7 +18,7 @@ const PostPage: React.FC = () => {
                     <h2>Post não encontrado</h2>
 
                     <Link to="/">← Voltar</Link>
-                    <h1>oi</h1>
+                    <h1></h1>
                 </div>
             </div>
         )

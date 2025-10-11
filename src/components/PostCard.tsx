@@ -3,6 +3,7 @@ import '../styles/PostCard.css';
 import type { Post } from '../types/Post';
 import supabase from '../utils/supabase';
 import { useAuth } from '../context/AuthContext';
+import ImageCarousel from './ImageCarousel';
 
 type Props = {
     post: Post;
@@ -224,13 +225,7 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
 
     const closeCarousel = () => setCarouselOpen(false);
 
-    const nextImage = () => {
-        setCarouselIndex(prev => (prev + 1) % imageFiles.length);
-    };
 
-    const prevImage = () => {
-        setCarouselIndex(prev => (prev - 1 + imageFiles.length) % imageFiles.length);
-    };
 
     return (
         <article className="post-card" aria-live="polite">
@@ -315,44 +310,13 @@ const PostCard: React.FC<Props> = ({ post, onDelete }) => {
             )}
 
             {/* 🖼️ Carrossel (mantido igual) */}
+            {/* 🖼️ Carrossel em tela cheia */}
             {carouselOpen && (
-                <div className="carousel-overlay" onClick={closeCarousel}>
-                    <div className="carousel-content" onClick={e => e.stopPropagation()}>
-                        <button
-                            className="carousel-btn prev"
-                            onClick={e => { e.stopPropagation(); prevImage(); }}
-                            aria-label="Imagem anterior"
-                        >
-                            ‹
-                        </button>
-
-                        <img
-                            src={imageFiles[carouselIndex]}
-                            alt={`Imagem ${carouselIndex + 1} de ${imageFiles.length}`}
-                            className="carousel-image"
-                        />
-
-                        <button
-                            className="carousel-btn next"
-                            onClick={e => { e.stopPropagation(); nextImage(); }}
-                            aria-label="Próxima imagem"
-                        >
-                            ›
-                        </button>
-
-                        <button
-                            className="carousel-close"
-                            onClick={e => { e.stopPropagation(); closeCarousel(); }}
-                            aria-label="Fechar carrossel"
-                        >
-                            ✕
-                        </button>
-
-                        <div className="carousel-counter">
-                            {carouselIndex + 1} / {imageFiles.length}
-                        </div>
-                    </div>
-                </div>
+                <ImageCarousel
+                    images={imageFiles}
+                    initialIndex={carouselIndex}
+                    onClose={closeCarousel}
+                />
             )}
         </article>
     );
