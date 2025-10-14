@@ -222,6 +222,7 @@
 .stats-table td {
     padding: 8px 12px;
     text-align: left;
+    color: #504c4c;
     white-space: nowrap; /* Evita quebra de linha indesejada */
     min-width: 60px; /* Largura mínima para células */
 }

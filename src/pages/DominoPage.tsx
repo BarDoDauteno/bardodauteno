@@ -190,7 +190,7 @@ export default function DominoPage() {
     return (
         <div className="domino-page-container">
             <header className="domino-header">
-                <h1>Partidas de Dominó</h1>
+                <h1>DOMINO DO DAUTENO</h1>
                 <Link to="/domino/create"><button className="create-match-btn">➕ Criar partida</button></Link>
             </header>
 
