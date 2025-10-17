@@ -31,15 +31,86 @@ type DuoStats = {
 
 type ViewMode = 'matches' | 'playerStats' | 'duoStats';
 
+// Novo tipo para período
+type PeriodFilter = {
+    type: 'all' | 'month' | 'custom';
+    months: string[]; // formato: 'YYYY-MM'
+    startDate?: string;
+    endDate?: string;
+};
+
 export default function DominoPage() {
     const [matches, setMatches] = useState<DominoMatch[]>([]);
+    const [filteredMatches, setFilteredMatches] = useState<DominoMatch[]>([]);
     const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);
     const [duoStats, setDuoStats] = useState<DuoStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<ViewMode>('playerStats');
     const [sortBy, setSortBy] = useState<'wins' | 'winRate'>('wins');
 
-    // Função para remover @gmail.com dos nomes
+    // Novos estados para filtros
+    const [periodFilter, setPeriodFilter] = useState<PeriodFilter>({ type: 'all', months: [] });
+    const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+    const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+
+    // Função para extrair meses disponíveis das partidas
+    const getAvailableMonths = (matchesData: DominoMatch[]) => {
+        const monthsSet = new Set<string>();
+
+        matchesData.forEach(match => {
+            const date = new Date(match.match_date);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+            monthsSet.add(monthKey);
+        });
+
+        const monthsArray = Array.from(monthsSet).sort().reverse();
+        setAvailableMonths(monthsArray);
+
+        // Selecionar o mês atual por padrão
+        const currentDate = new Date();
+        const currentMonth = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
+        setSelectedMonths([currentMonth]);
+        setPeriodFilter({
+            type: monthsArray.length > 0 ? 'month' : 'all',
+            months: [currentMonth]
+        });
+    };
+
+    // Função para filtrar matches por período
+    const filterMatchesByPeriod = (matchesData: DominoMatch[], period: PeriodFilter) => {
+        if (period.type === 'all') {
+            return matchesData;
+        }
+
+        return matchesData.filter(match => {
+            const matchDate = new Date(match.match_date);
+            const matchYear = matchDate.getFullYear();
+            const matchMonth = matchDate.getMonth() + 1;
+            const matchMonthKey = `${matchYear}-${matchMonth.toString().padStart(2, '0')}`;
+
+            return period.months.includes(matchMonthKey);
+        });
+    };
+
+    // Atualizar filtro quando selectedMonths mudar
+    useEffect(() => {
+        if (selectedMonths.length === 0) {
+            setPeriodFilter({ type: 'all', months: [] });
+            setFilteredMatches(matches);
+        } else {
+            setPeriodFilter({ type: 'month', months: selectedMonths });
+            const filtered = filterMatchesByPeriod(matches, { type: 'month', months: selectedMonths });
+            setFilteredMatches(filtered);
+        }
+    }, [selectedMonths, matches]);
+
+    // Recalcular estatísticas quando filteredMatches mudar
+    useEffect(() => {
+        calculateStats(filteredMatches);
+    }, [filteredMatches]);
+
     const cleanName = (name: string) => {
         if (!name) return 'Convidado';
         return name.replace(/@gmail\.com$/i, '');
@@ -64,7 +135,7 @@ export default function DominoPage() {
                 )
             `)
             .order('match_date', { ascending: false })
-            .limit(100);
+            .limit(1000); // Aumentei o limite para pegar mais dados históricos
 
         if (error) {
             console.error(error);
@@ -88,15 +159,13 @@ export default function DominoPage() {
         });
 
         setMatches(formatted);
-        calculateStats(formatted);
+        setFilteredMatches(formatted);
+        getAvailableMonths(formatted);
         setLoading(false);
     };
 
     const calculateStats = (matchesData: DominoMatch[]) => {
-        // Estatísticas de jogadores individuais
         const playerStatsMap = new Map<string, { wins: number; total: number }>();
-
-        // Estatísticas de duplas
         const duoStatsMap = new Map<string, { players: string[]; wins: number; total: number }>();
 
         matchesData.forEach(match => {
@@ -138,7 +207,6 @@ export default function DominoPage() {
                 const playerStats = playerStatsMap.get(playerName)!;
                 playerStats.total++;
 
-                // Verificar se o jogador estava no time vencedor
                 const isInRedTeam = match.duoRedNames.includes(playerName);
                 const isInBlueTeam = match.duoBlueNames.includes(playerName);
 
@@ -149,7 +217,6 @@ export default function DominoPage() {
             });
         });
 
-        // Converter map para arrays e calcular win rate
         const playerStatsArray: PlayerStats[] = Array.from(playerStatsMap.entries()).map(([name, stats]) => ({
             name,
             wins: stats.wins,
@@ -173,6 +240,41 @@ export default function DominoPage() {
         fetchMatches();
     }, []);
 
+    // Funções para manipular seleção de meses
+    const toggleMonthSelection = (monthKey: string) => {
+        setSelectedMonths(prev => {
+            if (prev.includes(monthKey)) {
+                return prev.filter(m => m !== monthKey);
+            } else {
+                return [...prev, monthKey];
+            }
+        });
+    };
+
+    const selectAllMonths = () => {
+        setSelectedMonths([...availableMonths]);
+    };
+
+    const clearMonthSelection = () => {
+        setSelectedMonths([]);
+    };
+
+    const selectCurrentMonth = () => {
+        const currentDate = new Date();
+        const currentMonth = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
+        setSelectedMonths([currentMonth]);
+    };
+
+    // Função para formatar o nome do mês
+    const formatMonthName = (monthKey: string) => {
+        const [year, month] = monthKey.split('-');
+        const monthNames = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+        return `${monthNames[parseInt(month) - 1]} ${year}`;
+    };
+
     const getMatchTitle = (match: DominoMatch) => {
         const redTeam = match.duoRedNames.length > 0 ? match.duoRedNames.join(' & ') : 'Dupla Vermelha';
         const blueTeam = match.duoBlueNames.length > 0 ? match.duoBlueNames.join(' & ') : 'Dupla Azul';
@@ -194,7 +296,53 @@ export default function DominoPage() {
                 <Link to="/domino/create"><button className="create-match-btn">➕ Criar partida</button></Link>
             </header>
 
-            {/* Controles de visualização - NOVA VERSÃO */}
+            {/* Filtro de Período - NOVO */}
+            <div className="period-filter-section">
+                <h3 className="filter-title">Filtrar por período:</h3>
+
+                <div className="period-controls">
+                    <button
+                        className={`period-btn ${selectedMonths.length === 0 ? 'active' : ''}`}
+                        onClick={clearMonthSelection}
+                    >
+                        📊 Todos os meses
+                    </button>
+                    <button
+                        className="period-btn"
+                        onClick={selectCurrentMonth}
+                    >
+                        🗓️ Mês atual
+                    </button>
+                    <button
+                        className="period-btn"
+                        onClick={selectAllMonths}
+                    >
+                        ⭐ Todos selecionados
+                    </button>
+                </div>
+
+                <div className="months-grid">
+                    {availableMonths.map(monthKey => (
+                        <button
+                            key={monthKey}
+                            className={`month-chip ${selectedMonths.includes(monthKey) ? 'selected' : ''}`}
+                            onClick={() => toggleMonthSelection(monthKey)}
+                        >
+                            {formatMonthName(monthKey)}
+                            {selectedMonths.includes(monthKey) && ' ✓'}
+                        </button>
+                    ))}
+                </div>
+
+                {selectedMonths.length > 0 && (
+                    <div className="selected-info">
+                        <strong>Período selecionado:</strong> {selectedMonths.length} mês(es) -
+                        {selectedMonths.map(monthKey => formatMonthName(monthKey)).join(', ')}
+                    </div>
+                )}
+            </div>
+
+            {/* Controles de visualização existentes */}
             <div className="view-controls">
                 <div className="filter-section">
                     <h3 className="filter-title">Visualizar:</h3>
@@ -243,40 +391,50 @@ export default function DominoPage() {
 
             {loading ? <p className="loading-text">Carregando...</p> : null}
 
-            {/* Visualização de Partidas */}
+            {/* Visualização de Partidas (agora usa filteredMatches) */}
             {viewMode === 'matches' && !loading && (
-                <ul className="matches-list">
-                    {matches.length === 0 && <li className="no-matches">Nenhuma partida registrada.</li>}
-                    {matches.map(m => (
-                        <li key={m.id} className="match-item">
-                            <div className="match-content">
-                                <div className="match-info">
-                                    <strong className="match-title">{getMatchTitle(m)}</strong>
-                                    <div className="match-meta">
-                                        #{m.id} — {new Date(m.match_date).toLocaleString()}
-                                    </div>
-                                    {m.comments && (
-                                        <div className="match-comments">
-                                            {m.comments}
+                <div className="matches-section">
+                    <div className="matches-header">
+                        <h3>Partidas {selectedMonths.length > 0 ? `(${selectedMonths.length} mês(es) selecionado(s))` : '(Todos os meses)'}</h3>
+                        <span className="matches-count">{filteredMatches.length} partidas</span>
+                    </div>
+                    <ul className="matches-list">
+                        {filteredMatches.length === 0 && <li className="no-matches">Nenhuma partida encontrada para o período selecionado.</li>}
+                        {filteredMatches.map(m => (
+                            <li key={m.id} className="match-item">
+                                <div className="match-content">
+                                    <div className="match-info">
+                                        <strong className="match-title">{getMatchTitle(m)}</strong>
+                                        <div className="match-meta">
+                                            #{m.id} — {new Date(m.match_date).toLocaleString()}
                                         </div>
-                                    )}
-                                    <div className="match-winner">
-                                        Vencedor: {m.winning_team === 0 ? 'Empate' : m.winning_team === 1 ? 'Vermelho' : 'Azul'}
+                                        {m.comments && (
+                                            <div className="match-comments">
+                                                {m.comments}
+                                            </div>
+                                        )}
+                                        <div className="match-winner">
+                                            Vencedor: {m.winning_team === 0 ? 'Empate' : m.winning_team === 1 ? 'Vermelho' : 'Azul'}
+                                        </div>
+                                    </div>
+                                    <div className="match-actions">
+                                        <Link to={`/domino/${m.id}`}><button className="view-btn">Ver</button></Link>
                                     </div>
                                 </div>
-                                <div className="match-actions">
-                                    <Link to={`/domino/${m.id}`}><button className="view-btn">Ver</button></Link>
-                                </div>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             )}
 
             {/* Estatísticas de Jogadores */}
             {viewMode === 'playerStats' && !loading && (
                 <div className="stats-container">
-                    <h3 className="stats-title">Ranking de Jogadores</h3>
+                    <div className="stats-header">
+                        <h3 className="stats-title">
+                            RANKING DE JOGADORES
+                        </h3>
+                    </div>
                     <table className="stats-table">
                         <thead>
                             <tr className="table-header">
@@ -307,7 +465,13 @@ export default function DominoPage() {
             {/* Estatísticas de Duplas */}
             {viewMode === 'duoStats' && !loading && (
                 <div className="stats-container">
-                    <h3 className="stats-title">Ranking de Duplas</h3>
+                    <div className="stats-header">
+                        <h3 className="stats-title">
+                            Ranking de Duplas
+                            {selectedMonths.length > 0 && ` - ${selectedMonths.length} mês(es) selecionado(s)`}
+                        </h3>
+                        <span className="stats-count">{sortedDuoStats.length} duplas</span>
+                    </div>
                     <table className="stats-table">
                         <thead>
                             <tr className="table-header">
