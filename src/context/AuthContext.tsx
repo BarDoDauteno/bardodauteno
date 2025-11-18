@@ -1,4 +1,3 @@
-// src/context/AuthContext.tsx
 import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import supabase from '../utils/supabase'

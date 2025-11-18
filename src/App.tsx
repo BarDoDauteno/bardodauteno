@@ -8,7 +8,7 @@ import CreatePost from './pages/CreatePost';
 import PostPage from './pages/PostPage';
 import NotFound from './pages/NotFound';
 import Login from './pages/Login';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import AllPosts from './pages/AllPosts';
 import BottomNav from './components/BottomNav';
 import DominoPage from './pages/DominoPage';
@@ -21,10 +21,10 @@ import MemoriesPage from './pages/MemoriesPage';
 
 
 
-
+// App.tsx - versão simplificada
 export default function App() {
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
-  const [user, setUser] = useState<any | null>(null);
+  const { user } = useAuth(); // ← Use o user do AuthContext
 
   useEffect(() => {
     const checkSession = async () => {
@@ -37,7 +37,7 @@ export default function App() {
       const session = data?.session;
       const email = session?.user?.email ?? null;
 
-      setUser(session?.user ?? null);
+      // Não precisa setUser aqui, o AuthContext já cuida disso
 
       if (!email) {
         setAdminEmail(null);
@@ -79,36 +79,21 @@ export default function App() {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
-
-            {/* Posts */}
-            {adminEmail && <Route path="/create" element={<CreatePost />} />}
             <Route path="/create-post" element={<CreatePost />} />
             <Route path="/post/:id" element={<PostPage />} />
             <Route path="/all-posts" element={<AllPosts />} />
-
-            {/* HomeHeaderNav*/}
-
             <Route path="/memories" element={<MemoriesPage />} />
             <Route path="/jokes" element={<JokesPage />} />
-
-            {/* Dominó */}
             <Route path="/domino" element={<DominoPage />} />
-            <Route path="/domino/create" element={<CreateMatch />} />
+            {user && <Route path="/domino/create" element={<CreateMatch />} />}
             <Route path="/domino/:matchId" element={<MatchPage />} />
-
-
-            {/*Perfil*/}
             <Route path="/perfil/:userId" element={<Profile />} />
-
-            {/* Autenticação */}
             <Route path="/login" element={<Login />} />
-
-            {/* NotFound */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />
-        <BottomNav user={user} setUser={setUser} />
+        <BottomNav />
       </Router>
     </AuthProvider>
   );

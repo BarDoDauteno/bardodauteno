@@ -14,6 +14,17 @@ export default function CreateMatch() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+        }
+    }, [user, navigate]);
+
+    // Se não tem usuário, não renderiza nada
+    if (!user) {
+        return null;
+    }
+
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
     const [winningTeam, setWinningTeam] = useState<number | null>(0);

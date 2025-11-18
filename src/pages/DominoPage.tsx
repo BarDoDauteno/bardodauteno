@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import supabase from '../utils/supabase';
 import { Link } from 'react-router-dom';
 import '../styles/DominoPage.css';
+import { useAuth } from '../context/AuthContext';
 
 type DominoMatch = {
     id: number;
@@ -40,6 +41,7 @@ type PeriodFilter = {
 };
 
 export default function DominoPage() {
+    const { user } = useAuth();
     const [matches, setMatches] = useState<DominoMatch[]>([]);
     const [filteredMatches, setFilteredMatches] = useState<DominoMatch[]>([]);
     const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);
@@ -293,7 +295,9 @@ export default function DominoPage() {
         <div className="domino-page-container">
             <header className="domino-header">
                 <h1>DOMINO DO DAUTENO</h1>
-                <Link to="/domino/create"><button className="create-match-btn">➕ Criar partida</button></Link>
+                {user && (
+                    <Link to="/domino/create"><button className="create-match-btn">➕ Criar partida</button></Link>
+                )}
             </header>
 
             {/* Filtro de Período - NOVO */}
