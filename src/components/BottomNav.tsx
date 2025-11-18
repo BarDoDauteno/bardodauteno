@@ -20,6 +20,7 @@ export default function BottomNav() {
         { icon: <FaHome />, label: 'Home', path: '/' },
         user && { icon: <FaPlusCircle />, label: 'Criar', path: '/create-post' },
         { icon: <GiDominoTiles />, label: 'Dominó', path: '/domino' },
+        user && { icon: <FaUser />, label: 'Perfil', path: `/perfil/${user.id}` },
         user
             ? {
                 icon: <FaSignOutAlt />,
