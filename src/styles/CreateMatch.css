@@ -1,6 +1,7 @@
 .create-match-container {
     max-width: 900px;
     margin: auto;
+    margin-top: -80px;
     padding: 20px;
     background: #1b1b1b;
     color: #fff;
@@ -132,4 +133,126 @@ button:hover {
 .team-buttons button.selected {
     box-shadow: 0 0 0 2px white, 0 0 0 4px currentColor;
     font-weight: bold;
+}
+/* Estilos novos para Votação e Condições */
+
+.divider {
+  border: 0;
+  border-top: 1px solid #333;
+  margin: 20px 0;
+}
+
+/* Team Buttons */
+.team-btn {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.2s;
+}
+
+.team-btn.red.active { background-color: #ef4444; color: white; opacity: 1; transform: scale(1.05); }
+.team-btn.blue.active { background-color: #3b82f6; color: white; opacity: 1; transform: scale(1.05); }
+
+/* Win Conditions (Pills) */
+.condition-pills {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.condition-pills button {
+  background: #2d2d2d;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.condition-pills button.active {
+  background: #f59e0b; /* Amarelo Ouro */
+  color: black;
+  border-color: #f59e0b;
+  font-weight: bold;
+}
+
+/* Voting Section */
+.voting-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.05);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.voter-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.voter-info img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.vote-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.vote-btn {
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+}
+
+.vote-btn.aura.active {
+  background: linear-gradient(45deg, #8b5cf6, #ec4899);
+  color: white;
+  border: none;
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+}
+
+.vote-btn.mogged.active {
+  background: #374151;
+  color: #9ca3af;
+  border-color: #9ca3af;
+  font-weight: bold;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  margin-top: 20px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.submit-btn:disabled {
+  background: #059669;
+  opacity: 0.7;
 }

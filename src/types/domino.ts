@@ -15,3 +15,16 @@ export type DominoMatchPlayer = {
     team: number;
 };
 
+export type DominoPlayerStats = {
+    player_id: string;
+    display_name: string;
+    avatar_url: string | null;
+    total_matches: number;
+    total_wins: number;
+    win_rate: number;
+    total_aura: number;
+    total_mogged: number;
+    total_bucha: number;
+    total_lasque: number;
+    total_contagem: number;
+};

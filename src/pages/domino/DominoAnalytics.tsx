@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import supabase from '../../utils/supabase';
 import {
-    AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+    AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import * as d3 from 'd3';
 import '../../styles/Analytics.css';
@@ -14,7 +14,6 @@ type MatchPlayerRow = {
     guest_name?: string | null;
     team: number;
     created_at?: string;
-    // O Supabase pode retornar um objeto ou array dependendo da query, ajustamos aqui para aceitar flexibilidade
     DominoPlayers?: { id: string; display_name: string } | { id: string; display_name: string }[] | null;
 };
 
@@ -33,6 +32,21 @@ type PlayerRow = {
     created_at?: string;
 };
 
+// Novo tipo para a View do Banco de Dados
+type PlayerStatsView = {
+    player_id: string;
+    display_name: string;
+    avatar_url: string | null;
+    total_matches: number;
+    total_wins: number;
+    win_rate: number;
+    total_aura: number;
+    total_mogged: number;
+    total_bucha: number;
+    total_lasque: number;
+    total_contagem: number;
+};
+
 // -------------------- MAIN COMPONENT --------------------
 export default function DominoAnalytics() {
     const [loading, setLoading] = useState(true);
@@ -41,23 +55,19 @@ export default function DominoAnalytics() {
     const [kpis, setKpis] = useState({ totalMatches: 0, totalPlayers: 0, pctGuests: 0 });
     const [socialKPIs, setSocialKPIs] = useState({ totalPosts: 0, totalComments: 0, topPosts: [] as any[] });
 
-    // Chart Data States
+    // Dados Cronológicos (Calculados manualmente via processAll)
     const [seriesMatchesByDay, setSeriesMatchesByDay] = useState<any[]>([]);
     const [seriesMatchesByHour, setSeriesMatchesByHour] = useState<any[]>([]);
     const [seriesMatchesByWeekday, setSeriesMatchesByWeekday] = useState<any[]>([]);
-
-    // Estavam faltando serem usados no JSX anterior:
-    const [newPlayersByMonth, setNewPlayersByMonth] = useState<any[]>([]);
-    const [playerExperienceHist, setPlayerExperienceHist] = useState<any[]>([]);
-
-    const [playerRankings, setPlayerRankings] = useState<any[]>([]);
-    const [playerWinRates, setPlayerWinRates] = useState<any[]>([]);
-    const [duoTop, setDuoTop] = useState<any[]>([]);
-    const [streaksHistorical, setStreaksHistorical] = useState<any[]>([]);
     const [heatmapHourlyWeek, setHeatmapHourlyWeek] = useState<number[][]>([]);
-
-    // Network Graph Data
+    const [streaksHistorical, setStreaksHistorical] = useState<any[]>([]);
     const [coPlayMatrix, setCoPlayMatrix] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
+    const [newPlayersByMonth, setNewPlayersByMonth] = useState<any[]>([]);
+
+    // Dados Estatísticos (Vindos da VIEW vw_domino_player_wins)
+    const [viewStats, setViewStats] = useState<PlayerStatsView[]>([]);
+    const [duoTop, setDuoTop] = useState<any[]>([]);
+
     const networkRef = useRef<HTMLDivElement | null>(null);
 
     // Helper: Limpar nomes
@@ -66,7 +76,6 @@ export default function DominoAnalytics() {
         return name.replace(/@.+$/, '').trim();
     };
 
-    // Helper seguro para pegar nome do DominoPlayers (lidando com array ou objeto)
     const getPlayerName = (mp: MatchPlayerRow) => {
         if (mp.guest_name) return mp.guest_name;
         if (!mp.DominoPlayers) return 'Convidado';
@@ -83,29 +92,35 @@ export default function DominoAnalytics() {
     async function fetchAll() {
         setLoading(true);
         try {
-            // 1. Buscar Partidas e Jogadores
+            // 1. Buscar Dados Brutos para Gráficos Temporais e de Rede
             const { data: matchesData, error: matchesError } = await supabase
                 .from('DominoMatches')
                 .select(`
-          id, match_date, winning_team, comments, created_at,
-          DominoMatchPlayers (
-            id, match_id, player_id, guest_name, team, created_at,
-            DominoPlayers (id, display_name)
-          )
-        `)
+                    id, match_date, winning_team, comments, created_at,
+                    DominoMatchPlayers (
+                        id, match_id, player_id, guest_name, team, created_at,
+                        DominoPlayers (id, display_name)
+                    )
+                `)
                 .order('match_date', { ascending: true });
 
             if (matchesError) throw matchesError;
 
-            const { data: playersData, error: playersError } = await supabase
+            const { data: playersData } = await supabase
                 .from('DominoPlayers')
                 .select(`id, user_id, display_name, created_at`);
 
-            if (playersError) throw playersError;
+            // 2. Buscar Estatísticas Prontas da VIEW (Aura, Mogged, Win Types)
+            const { data: statsView, error: viewError } = await supabase
+                .from('vw_domino_player_wins')
+                .select('*')
+                .order('total_wins', { ascending: false });
 
-            // 2. Buscar Social (Tipagem explícita para corrigir erro 'implicit any')
+            if (viewError) console.warn("Erro ao buscar view de stats:", viewError);
+            if (statsView) setViewStats(statsView);
+
+            // 3. Buscar Social
             let posts: any[] = [], comments: any[] = [], interactions: any[] = [];
-
             try {
                 const [pRes, cRes, iRes] = await Promise.all([
                     supabase.from('Posts').select('id, title, created_at, user_id'),
@@ -115,12 +130,8 @@ export default function DominoAnalytics() {
                 posts = pRes.data || [];
                 comments = cRes.data || [];
                 interactions = iRes.data || [];
-            } catch (err) {
-                console.warn("Tabelas sociais não encontradas ou erro de permissão.", err);
-            }
+            } catch (err) { console.warn("Social tables missing", err); }
 
-            // Correção de Tipo: Usamos 'as unknown as MatchRow[]' para forçar a compatibilidade
-            // pois sabemos que a estrutura retornada pelo Supabase bate com nossa lógica
             processAll(
                 (matchesData || []) as unknown as MatchRow[],
                 (playersData || []) as unknown as PlayerRow[],
@@ -137,20 +148,14 @@ export default function DominoAnalytics() {
     }
 
     function processAll(matchesRows: MatchRow[], playersRows: PlayerRow[], posts: any[], comments: any[], interactions: any[]) {
-        // --- PREPARAÇÃO DE DADOS ---
         const totalMatches = matchesRows.length;
         const pmap = new Map<string, any>();
 
-        const ensurePlayer = (name: string) => {
-            if (!pmap.has(name)) {
-                pmap.set(name, {
-                    name, wins: 0, total: 0, currentStreak: 0, maxStreak: 0, matches: []
-                });
-            }
-            return pmap.get(name)!;
-        };
-
+        // Matrizes e Mapas para processamento manual (Timeline, Heatmap, Rede)
         const coMatrix = new Map<string, Map<string, number>>();
+        const duoMap = new Map<string, { wins: number; total: number }>();
+        const heat = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
+
         const addCo = (a: string, b: string) => {
             if (a === b) return;
             if (!coMatrix.has(a)) coMatrix.set(a, new Map());
@@ -158,20 +163,20 @@ export default function DominoAnalytics() {
             row.set(b, (row.get(b) || 0) + 1);
         };
 
-        const heat = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
-        const duoMap = new Map<string, { wins: number; total: number }>();
+        const ensurePlayer = (name: string) => {
+            if (!pmap.has(name)) {
+                pmap.set(name, { name, wins: 0, total: 0, currentStreak: 0, maxStreak: 0 });
+            }
+            return pmap.get(name)!;
+        };
 
         let guestAppearanceCount = 0;
         let totalSlots = 0;
 
-        // --- LOOP PRINCIPAL ---
         matchesRows.forEach((m) => {
             const date = new Date(m.match_date);
-            const day = date.getDay();
-            const hour = date.getHours();
-            heat[day][hour] = (heat[day][hour] || 0) + 1;
+            heat[date.getDay()][date.getHours()]++;
 
-            // Identificar jogadores usando o helper seguro
             const team1Players = (m.DominoMatchPlayers || []).filter(mp => mp.team === 1);
             const team2Players = (m.DominoMatchPlayers || []).filter(mp => mp.team === 2);
 
@@ -180,11 +185,9 @@ export default function DominoAnalytics() {
             const allNames = [...team1Names, ...team2Names];
 
             totalSlots += (m.DominoMatchPlayers || []).length;
-            (m.DominoMatchPlayers || []).forEach(mp => {
-                if (!mp.player_id) guestAppearanceCount++;
-            });
+            (m.DominoMatchPlayers || []).forEach(mp => { if (!mp.player_id) guestAppearanceCount++; });
 
-            // Rede de Conexões
+            // Rede
             for (let i = 0; i < allNames.length; i++) {
                 for (let j = i + 1; j < allNames.length; j++) {
                     addCo(allNames[i], allNames[j]);
@@ -192,7 +195,7 @@ export default function DominoAnalytics() {
                 }
             }
 
-            // Stats Individuais
+            // Streaks (Calculado manual pq precisa da ordem cronológica)
             allNames.forEach(name => {
                 const stat = ensurePlayer(name);
                 stat.total++;
@@ -203,7 +206,7 @@ export default function DominoAnalytics() {
                     stat.wins++;
                     stat.currentStreak++;
                 } else {
-                    if (stat.currentStreak > stat.maxStreak) stat.maxStreak = stat.currentStreak;
+                    stat.maxStreak = Math.max(stat.maxStreak, stat.currentStreak);
                     stat.currentStreak = 0;
                 }
             });
@@ -222,59 +225,48 @@ export default function DominoAnalytics() {
             processDuo(team2Names, 2);
         });
 
-        // --- PÓS-PROCESSAMENTO ---
-        const playersArray = Array.from(pmap.values());
-
-        // 1. KPIs & Séries
+        // --- SET STATES (Dados Temporais e de Rede) ---
         setKpis({
             totalMatches,
             totalPlayers: playersRows.length,
             pctGuests: totalSlots > 0 ? Math.round((guestAppearanceCount / totalSlots) * 100) : 0
         });
 
+        // Timeline
         const byDay = d3.rollups(matchesRows, v => v.length, m => (new Date(m.match_date)).toISOString().slice(0, 10))
-            .map(([date, matches]) => ({ date, matches }))
-            .sort((a, b) => a.date.localeCompare(b.date));
+            .map(([date, matches]) => ({ date, matches })).sort((a, b) => a.date.localeCompare(b.date));
+        setSeriesMatchesByDay(byDay);
 
+        // Hour & Weekday buckets
         const hourBuckets = Array.from({ length: 24 }, (_, h) => ({ hour: h, matches: 0 }));
         matchesRows.forEach(m => hourBuckets[new Date(m.match_date).getHours()].matches++);
+        setSeriesMatchesByHour(hourBuckets);
 
         const weekdayBuckets = Array.from({ length: 7 }, (_, w) => ({ weekday: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][w], count: 0 }));
         matchesRows.forEach(m => weekdayBuckets[new Date(m.match_date).getDay()].count++);
+        setSeriesMatchesByWeekday(weekdayBuckets);
 
-        // 2. Novos Jogadores por Mês (Estava faltando ser usado)
-        const newPlayersMap = d3.rollups(playersRows, v => v.length, p => (p.created_at ? new Date(p.created_at).toISOString().slice(0, 7) : 'Antigo'))
-            .map(([month, count]) => ({ month, count }))
-            .sort((a, b) => a.month.localeCompare(b.month));
+        // Streaks
+        const playersArray = Array.from(pmap.values());
+        const streaks = playersArray
+            .map(p => ({ name: p.name, maxStreak: Math.max(p.maxStreak, p.currentStreak), currentStreak: p.currentStreak }))
+            .sort((a, b) => b.maxStreak - a.maxStreak).slice(0, 10);
+        setStreaksHistorical(streaks);
 
-        // 3. Histograma de Experiência (Estava faltando ser usado)
-        // Agrupa jogadores por faixas de quantidade de jogos (ex: 1-5 jogos, 6-10 jogos)
-        const xpBuckets = [1, 5, 10, 20, 50, 100];
-        const xpHist = xpBuckets.map((limit, i) => {
-            const prev = i === 0 ? 0 : xpBuckets[i - 1];
-            const count = playersArray.filter(p => p.total > prev && p.total <= limit).length;
-            return { range: `${prev + 1}-${limit}`, count };
-        });
-        // Adiciona os que tem mais que o ultimo bucket
-        const hugeXp = playersArray.filter(p => p.total > 100).length;
-        if (hugeXp > 0) xpHist.push({ range: '100+', count: hugeXp });
-
-
-        // 4. Rankings
-        const rankingByMatches = [...playersArray].sort((a, b) => b.total - a.total).slice(0, 20);
-        const rankingByWinRate = playersArray
-            .filter(p => p.total >= 5)
-            .map(p => ({ ...p, winRate: parseFloat(((p.wins / p.total) * 100).toFixed(1)) }))
-            .sort((a, b) => b.winRate - a.winRate)
-            .slice(0, 20);
-
+        // Duos
         const duosArr = Array.from(duoMap.entries())
             .map(([k, v]) => ({ duo: k, wins: v.wins, total: v.total, winRate: parseFloat(((v.wins / v.total) * 100).toFixed(1)) }))
-            .filter(d => d.total >= 3)
-            .sort((a, b) => b.winRate - a.winRate)
-            .slice(0, 10);
+            .filter(d => d.total >= 3).sort((a, b) => b.winRate - a.winRate).slice(0, 10);
+        setDuoTop(duosArr);
 
-        // 5. Network
+        // New Players Timeline
+        const newPlayersMap = d3.rollups(playersRows, v => v.length, p => (p.created_at ? new Date(p.created_at).toISOString().slice(0, 7) : 'Antigo'))
+            .map(([month, count]) => ({ month, count })).sort((a, b) => a.month.localeCompare(b.month));
+        setNewPlayersByMonth(newPlayersMap);
+
+        // Heatmap & Network
+        setHeatmapHourlyWeek(heat);
+
         const nodes = Array.from(pmap.keys()).map(n => ({ id: n, group: 1 }));
         const links: any[] = [];
         coMatrix.forEach((targets, source) => {
@@ -282,98 +274,64 @@ export default function DominoAnalytics() {
                 if (source < target) links.push({ source, target, value: count });
             });
         });
+        setCoPlayMatrix({ nodes, links });
 
-        const streaks = playersArray
-            .map(p => ({ name: p.name, maxStreak: Math.max(p.maxStreak, p.currentStreak), currentStreak: p.currentStreak }))
-            .sort((a, b) => b.maxStreak - a.maxStreak)
-            .slice(0, 10);
-
+        // Social KPIs
         const postInteractionsMap = (interactions || []).reduce((acc: any, cur: any) => {
             acc[cur.post_id] = (acc[cur.post_id] || 0) + (cur.aurapost ? 1 : 0) + (cur.mogged ? 1 : 0);
             return acc;
         }, {});
-
         const topPosts = Object.entries(postInteractionsMap)
             .map(([postId, score]: any) => ({ postId, score }))
-            .sort((a: any, b: any) => b.score - a.score)
-            .slice(0, 5);
-
-        // Set States
-        setSeriesMatchesByDay(byDay);
-        setSeriesMatchesByHour(hourBuckets);
-        setSeriesMatchesByWeekday(weekdayBuckets);
-        setNewPlayersByMonth(newPlayersMap); // Usado agora
-        setPlayerExperienceHist(xpHist);     // Usado agora
-        setPlayerRankings(rankingByMatches);
-        setPlayerWinRates(rankingByWinRate);
-        setDuoTop(duosArr);
-        setCoPlayMatrix({ nodes, links });
-        setStreaksHistorical(streaks);
-        setHeatmapHourlyWeek(heat);
+            .sort((a: any, b: any) => b.score - a.score).slice(0, 5);
         setSocialKPIs({ totalPosts: posts.length, totalComments: comments.length, topPosts });
     }
 
-    // --- D3 FORCE GRAPH EFFECT ---
+    // --- D3 FORCE GRAPH ---
     useEffect(() => {
         if (!networkRef.current || !coPlayMatrix.nodes.length) return;
-
         const container = networkRef.current;
         container.innerHTML = '';
         const width = container.clientWidth;
         const height = 400;
-
-        const svg = d3.select(container).append('svg')
-            .attr('width', width)
-            .attr('height', height)
-            .attr('viewBox', [0, 0, width, height]);
+        const svg = d3.select(container).append('svg').attr('width', width).attr('height', height).attr('viewBox', [0, 0, width, height]);
 
         const nodes = coPlayMatrix.nodes.map(d => ({ ...d }));
         const links = coPlayMatrix.links.map(d => ({ ...d }));
 
         const simulation = d3.forceSimulation(nodes as any)
-            .force("link", d3.forceLink(links).id((d: any) => d.id).distance(100))
-            .force("charge", d3.forceManyBody().strength(-200))
+            .force("link", d3.forceLink(links).id((d: any) => d.id).distance(80))
+            .force("charge", d3.forceManyBody().strength(-150))
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collide", d3.forceCollide(20));
+            .force("collide", d3.forceCollide(15));
 
-        const link = svg.append("g")
-            .selectAll("line")
-            .data(links)
-            .join("line")
-            .attr("stroke", "#999")
-            .attr("stroke-opacity", 0.6)
-            .attr("stroke-width", (d: any) => Math.sqrt(d.value));
+        const link = svg.append("g").selectAll("line").data(links).join("line").attr("stroke", "#999").attr("stroke-opacity", 0.6).attr("stroke-width", (d: any) => Math.sqrt(d.value));
+        const node = svg.append("g").selectAll("g").data(nodes).join("g");
 
-        const node = svg.append("g")
-            .selectAll("g")
-            .data(nodes)
-            .join("g");
-
-        node.append("circle")
-            .attr("r", 8)
-            .attr("fill", "#4f46e5")
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 1.5);
-
-        node.append("text")
-            .text((d: any) => d.id)
-            .attr('x', 12)
-            .attr('y', 4)
-            .style('font-size', '10px')
-            .style('font-family', 'sans-serif')
-            .style('fill', '#333');
+        node.append("circle").attr("r", 6).attr("fill", "#4f46e5").attr("stroke", "#fff").attr("stroke-width", 1.5);
+        node.append("text").text((d: any) => d.id).attr('x', 8).attr('y', 3).style('font-size', '10px').style('fill', '#333');
 
         simulation.on("tick", () => {
-            link
-                .attr("x1", (d: any) => d.source.x)
-                .attr("y1", (d: any) => d.source.y)
-                .attr("x2", (d: any) => d.target.x)
-                .attr("y2", (d: any) => d.target.y);
+            link.attr("x1", (d: any) => d.source.x).attr("y1", (d: any) => d.source.y).attr("x2", (d: any) => d.target.x).attr("y2", (d: any) => d.target.y);
             node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
         });
-
         return () => { simulation.stop(); };
     }, [coPlayMatrix]);
+
+    // PREPARAÇÃO DE DADOS ESPECÍFICOS PARA OS NOVOS GRÁFICOS
+    const auraRanking = [...viewStats].sort((a, b) => b.total_aura - a.total_aura).slice(0, 10);
+    const moggedRanking = [...viewStats].sort((a, b) => b.total_mogged - a.total_mogged).slice(0, 10);
+
+    // Dados para o Gráfico de Tipos de Vitória (Stacked Bar)
+    const winTypeStats = viewStats
+        .filter(p => p.total_wins > 0)
+        .slice(0, 10)
+        .map(p => ({
+            name: p.display_name,
+            Bucha: p.total_bucha,
+            Lasque: p.total_lasque,
+            Contagem: p.total_contagem
+        }));
 
     if (loading) return <div className="loading">Carregando Intelligence...</div>;
 
@@ -381,7 +339,7 @@ export default function DominoAnalytics() {
         <div className="analytics-container">
             <div className="header-section">
                 <h1>Domino Intelligence</h1>
-                <p>Análise profunda de métricas, comportamento e rede.</p>
+                <p>Análise de Performance, Aura e Rede de Jogadores.</p>
             </div>
 
             {/* KPIs */}
@@ -391,10 +349,9 @@ export default function DominoAnalytics() {
                     <div className="big-number" style={{ color: '#4f46e5' }}>{kpis.totalMatches}</div>
                 </div>
                 <div className="stat-card">
-                    <h3>Total de Jogadores</h3>
+                    <h3>Jogadores Ativos</h3>
                     <div className="big-number" style={{ color: '#10b981' }}>{kpis.totalPlayers}</div>
                 </div>
-
                 {socialKPIs.totalPosts > 0 && (
                     <div className="stat-card">
                         <h3>Interações Sociais</h3>
@@ -405,32 +362,26 @@ export default function DominoAnalytics() {
 
             <div className="stats-grid">
 
-                {/* Gráfico 1: Evolução Temporal */}
+                {/* 1. Evolução Temporal */}
                 <div className="chart-box wide">
-                    <div className="chart-header"><h3>Evolução de Partidas (Timeline)</h3></div>
-                    <ResponsiveContainer width="100%" height={280}>
+                    <div className="chart-header"><h3>Timeline de Partidas</h3></div>
+                    <ResponsiveContainer width="100%" height={250}>
                         <AreaChart data={seriesMatchesByDay}>
                             <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                            <XAxis dataKey="date" stroke="#6b7280" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                            <YAxis stroke="#6b7280" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                            <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                            <Area type="monotone" dataKey="matches" stroke="#4f46e5" fill="rgba(79, 70, 229, 0.1)" strokeWidth={3} />
+                            <XAxis dataKey="date" stroke="#6b7280" tick={{ fontSize: 12 }} />
+                            <YAxis stroke="#6b7280" />
+                            <Tooltip />
+                            <Area type="monotone" dataKey="matches" stroke="#4f46e5" fill="rgba(79, 70, 229, 0.1)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
 
-                {/* Gráfico 2: Histograma de XP (Recuperado) */}
-
-
-                {/* Gráfico 3: Novos Jogadores (Recuperado) */}
-
-
-                {/* Dia da Semana */}
+                {/* 2. Dias Mais Ativos */}
                 <div className="chart-box">
-                    <h3>Dias Mais Ativos</h3>
+                    <h3>Dias da Semana</h3>
                     <ResponsiveContainer width="100%" height={250}>
                         <BarChart data={seriesMatchesByWeekday}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+                            <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
                             <XAxis dataKey="weekday" stroke="#6b7280" />
                             <Tooltip cursor={{ fill: 'transparent' }} />
                             <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} />
@@ -438,106 +389,120 @@ export default function DominoAnalytics() {
                     </ResponsiveContainer>
                 </div>
 
-                {/* Top Players */}
-                <div className="chart-box wide">
-                    <h3>🏆 Top Jogadores (Atividade)</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={playerRankings} layout="vertical" margin={{ left: 20 }}>
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.2} />
-                            {/* O eixo X mostra a quantidade numérica */}
-                            <XAxis type="number" hide />
-                            {/* O eixo Y mostra os nomes */}
-                            <YAxis
-                                dataKey="name"
-                                type="category"
-                                width={100}
-                                stroke="#374151"
-                                tick={{ fill: '#374151', fontWeight: 500 }}
-                            />
+                {/* 3. Novos Jogadores */}
+                <div className="chart-box">
+                    <h3>Crescimento (Novos Jogadores)</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                        <AreaChart data={newPlayersByMonth}>
+                            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                            <XAxis dataKey="month" stroke="#6b7280" />
                             <Tooltip />
-                            {/* CORREÇÃO AQUI: dataKey="total" em vez de "matches" */}
-                            <Bar
-                                dataKey="total"
-                                name="Partidas"
-                                fill="#4f46e5"
-                                barSize={18}
-                                radius={[0, 4, 4, 0]}
-                            />
+                            <Area type="monotone" dataKey="count" stroke="#10b981" fill="rgba(16, 185, 129, 0.1)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+
+                {/* 4. TOP PLAYERS (Total de Vitórias) */}
+                <div className="chart-box wide">
+                    <h3>🏆 Ranking de Vitórias</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={viewStats.slice(0, 15)} layout="vertical" margin={{ left: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.2} />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="display_name" type="category" width={100} stroke="#374151" tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Bar dataKey="total_wins" name="Vitórias" fill="#4f46e5" barSize={18} radius={[0, 4, 4, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
 
-                {/* Win Rate */}
+                {/* 5. ESTILO DE VITÓRIA (NOVO) */}
+                <div className="chart-box wide">
+                    <h3>🎨 Estilo de Vitória (Top 10)</h3>
+                    <small>Bucha vs Lasque vs Contagem</small>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={winTypeStats} layout="vertical" margin={{ left: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.2} />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={100} stroke="#374151" tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="Bucha" stackId="a" fill="#f59e0b" barSize={20} />
+                            <Bar dataKey="Contagem" stackId="a" fill="#3b82f6" barSize={20} />
+                            <Bar dataKey="Lasque" stackId="a" fill="#ef4444" barSize={20} radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+
+                {/* 6. RANKING DE AURA (NOVO) */}
+                <div className="chart-box">
+                    <h3>✨ Ranking de Aura</h3>
+                    <small>Jogadores mais "iluminados"</small>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={auraRanking} layout="vertical">
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="display_name" type="category" width={90} stroke="#374151" tick={{ fontSize: 11 }} />
+                            <Tooltip />
+                            <Bar dataKey="total_aura" name="Auras" fill="#8b5cf6" barSize={15} radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+
+                {/* 7. RANKING DE MOGGED (NOVO) */}
+                <div className="chart-box">
+                    <h3>🗿 Mural do Mogged</h3>
+                    <small>Quem foi mais moggado</small>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={moggedRanking} layout="vertical">
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="display_name" type="category" width={90} stroke="#374151" tick={{ fontSize: 11 }} />
+                            <Tooltip />
+                            <Bar dataKey="total_mogged" name="Moggadas" fill="#374151" barSize={15} radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+
+                {/* 8. Win Rate */}
                 <div className="chart-box">
                     <h3>🎯 Eficiência (Win Rate %)</h3>
-                    <small>Mínimo 5 partidas</small>
+                    <small>Mín. 5 partidas</small>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={playerWinRates} layout="vertical" margin={{ left: 20 }}>
+                        <BarChart data={viewStats.filter(p => p.total_matches >= 5).sort((a, b) => b.win_rate - a.win_rate).slice(0, 10)} layout="vertical" margin={{ left: 20 }}>
                             <XAxis type="number" hide domain={[0, 100]} />
-                            <YAxis dataKey="name" type="category" width={100} stroke="#374151" />
+                            <YAxis dataKey="display_name" type="category" width={100} stroke="#374151" />
                             <Tooltip formatter={(val) => `${val}%`} />
-                            <Bar dataKey="winRate" fill="#ec4899" barSize={18} radius={[0, 4, 4, 0]} />
+                            <Bar dataKey="win_rate" fill="#ec4899" barSize={18} radius={[0, 4, 4, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
 
-                {/* Network Graph */}
-
-
-                {/* Heatmap Table */}
-                <div className="chart-box wide">
-                    <h3>Mapa de Calor Semanal</h3>
-                    <div style={{ overflowX: 'auto', marginTop: '15px' }}>
-                        <table style={{ width: '100%', borderSpacing: '2px' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: 'left', fontSize: '0.8rem', color: '#6b7280' }}>Dia</th>
-                                    {Array.from({ length: 24 }).map((_, i) => <th key={i} style={{ fontSize: '0.7rem', color: '#9ca3af' }}>{i}h</th>)}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {heatmapHourlyWeek.map((row, d) => (
-                                    <tr key={d}>
-                                        <td style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#374151' }}>{['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'][d]}</td>
-                                        {row.map((val, h) => (
-                                            <td key={h}>
-                                                <div style={{
-                                                    height: '20px',
-                                                    backgroundColor: val > 0 ? `rgba(79, 70, 229, ${Math.min(1, val / 5)})` : '#f3f4f6',
-                                                    borderRadius: '4px',
-                                                    minWidth: '10px'
-                                                }} title={`${val} jogos às ${h}h`}></div>
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                {/* 9. Rede de Conexões */}
+                <div className="chart-box wide" style={{ minHeight: '450px' }}>
+                    <h3>🕸️ Rede de Jogadores</h3>
+                    <div ref={networkRef} style={{ width: '100%', height: '400px', background: '#fafafa', borderRadius: '12px' }} />
                 </div>
 
-                {/* Streaks */}
+                {/* 10. Streaks */}
                 <div className="stat-card streak-card">
-                    <h3>🔥 Maiores Sequências Históricas</h3>
+                    <h3>🔥 Maiores Sequências</h3>
                     <div className="streak-list">
                         {streaksHistorical.map((s, i) => (
                             <div key={i} className="streak-item">
                                 <span className="streak-pos">#{i + 1}</span>
                                 <span className="streak-name">{s.name}</span>
-                                <span className="streak-count">{s.maxStreak} vitórias seguidas</span>
+                                <span className="streak-count">{s.maxStreak} vitórias</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Duplas */}
+                {/* 11. Melhores Duplas */}
                 <div className="chart-box">
-                    <h3>🤝 Melhores Duplas</h3>
-                    <small>Win Rate % (Min 3 jogos)</small>
+                    <h3>🤝 Top Duplas</h3>
                     <ul style={{ listStyle: 'none', padding: 0, marginTop: 15 }}>
                         {duoTop.map((d, i) => (
-                            <li key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 5, borderBottom: '1px solid #f3f4f6' }}>
-                                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#374151' }}>{d.duo}</span>
+                            <li key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, paddingBottom: 5, borderBottom: '1px solid #eee' }}>
+                                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#333' }}>{d.duo}</span>
                                 <span style={{ fontWeight: 700, color: '#10b981' }}>{d.winRate}%</span>
                             </li>
                         ))}
