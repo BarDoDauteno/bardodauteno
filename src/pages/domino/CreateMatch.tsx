@@ -213,14 +213,14 @@ export default function CreateMatch() {
                             className={`team-btn red ${winningTeam === 1 ? 'active' : ''}`}
                             onClick={() => setWinningTeam(1)}
                         >
-                            Time Vermelho
+                            Vermelho
                         </button>
                         <button
                             type="button"
                             className={`team-btn blue ${winningTeam === 2 ? 'active' : ''}`}
                             onClick={() => setWinningTeam(2)}
                         >
-                            Time Azul
+                            Azul
                         </button>
                     </div>
 

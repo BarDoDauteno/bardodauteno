@@ -152,15 +152,18 @@ export default function DominoAnalytics() {
         const pmap = new Map<string, any>();
 
         // Matrizes e Mapas para processamento manual (Timeline, Heatmap, Rede)
-        const coMatrix = new Map<string, Map<string, number>>();
+        const winMatrix = new Map<string, Map<string, number>>();
         const duoMap = new Map<string, { wins: number; total: number }>();
         const heat = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
 
-        const addCo = (a: string, b: string) => {
+        const addWin = (a: string, b: string) => {
             if (a === b) return;
-            if (!coMatrix.has(a)) coMatrix.set(a, new Map());
-            const row = coMatrix.get(a)!;
-            row.set(b, (row.get(b) || 0) + 1);
+            // Garante ordem alfabética para A-B ser igual a B-A
+            const [p1, p2] = [a, b].sort();
+
+            if (!winMatrix.has(p1)) winMatrix.set(p1, new Map());
+            const row = winMatrix.get(p1)!;
+            row.set(p2, (row.get(p2) || 0) + 1);
         };
 
         const ensurePlayer = (name: string) => {
@@ -188,11 +191,11 @@ export default function DominoAnalytics() {
             (m.DominoMatchPlayers || []).forEach(mp => { if (!mp.player_id) guestAppearanceCount++; });
 
             // Rede
-            for (let i = 0; i < allNames.length; i++) {
-                for (let j = i + 1; j < allNames.length; j++) {
-                    addCo(allNames[i], allNames[j]);
-                    addCo(allNames[j], allNames[i]);
-                }
+            if (m.winning_team === 1 && team1Names.length === 2) {
+                addWin(team1Names[0], team1Names[1]);
+            }
+            if (m.winning_team === 2 && team2Names.length === 2) {
+                addWin(team2Names[0], team2Names[1]);
             }
 
             // Streaks (Calculado manual pq precisa da ordem cronológica)
@@ -269,11 +272,14 @@ export default function DominoAnalytics() {
 
         const nodes = Array.from(pmap.keys()).map(n => ({ id: n, group: 1 }));
         const links: any[] = [];
-        coMatrix.forEach((targets, source) => {
+
+        winMatrix.forEach((targets, source) => {
             targets.forEach((count, target) => {
-                if (source < target) links.push({ source, target, value: count });
+                // count agora representa VITÓRIAS JUNTOS
+                links.push({ source, target, value: count });
             });
         });
+
         setCoPlayMatrix({ nodes, links });
 
         // Social KPIs
@@ -293,28 +299,104 @@ export default function DominoAnalytics() {
         const container = networkRef.current;
         container.innerHTML = '';
         const width = container.clientWidth;
-        const height = 400;
-        const svg = d3.select(container).append('svg').attr('width', width).attr('height', height).attr('viewBox', [0, 0, width, height]);
+        const height = 450;
+        const svg = d3.select(container).append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('viewBox', [0, 0, width, height])
+            .style('background', 'transparent') // Deixa transparente para usar o fundo da div
+            .style('border-radius', '12px');
 
         const nodes = coPlayMatrix.nodes.map(d => ({ ...d }));
         const links = coPlayMatrix.links.map(d => ({ ...d }));
 
+
+        // 1. ESCALA DE CORES PERSONALIZADA
+        // Domínio: [1 vitória, 3 vitórias, 6 vitórias, 10+ vitórias]
+        const colorScale = d3.scaleLinear<string>()
+            .domain([1, 3, 6, 9])
+            .range(['#4b5563', '#22d3ee', '#c084fc', '#ef4444'])
+            .clamp(true); // Se passar de 10, mantem a cor vermelha
+
+        // 2. Simulação de Física
         const simulation = d3.forceSimulation(nodes as any)
-            .force("link", d3.forceLink(links).id((d: any) => d.id).distance(80))
-            .force("charge", d3.forceManyBody().strength(-150))
+            .force("link", d3.forceLink(links).id((d: any) => d.id).distance(100)) // Distância maior para ver melhor
+            .force("charge", d3.forceManyBody().strength(-300)) // Repulsão maior para não embolar
             .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collide", d3.forceCollide(15));
+            .force("collide", d3.forceCollide(25));
 
-        const link = svg.append("g").selectAll("line").data(links).join("line").attr("stroke", "#999").attr("stroke-opacity", 0.6).attr("stroke-width", (d: any) => Math.sqrt(d.value));
-        const node = svg.append("g").selectAll("g").data(nodes).join("g");
+        // 3. Renderizar Links (Linhas)
+        const link = svg.append("g")
+            .selectAll("line")
+            .data(links)
+            .join("line")
+            .attr("stroke", (d: any) => colorScale(d.value)) // APLICA A COR AQUI
+            .attr("stroke-opacity", 0.8)
+            .attr("stroke-width", (d: any) => Math.max(1, Math.sqrt(d.value) * 2)); // Linha mais grossa se tiver mais vitórias
 
-        node.append("circle").attr("r", 6).attr("fill", "#4f46e5").attr("stroke", "#fff").attr("stroke-width", 1.5);
-        node.append("text").text((d: any) => d.id).attr('x', 8).attr('y', 3).style('font-size', '10px').style('fill', '#333');
+        // 4. Renderizar Nós (Bolinhas)
+        const node = svg.append("g")
+            .selectAll("g")
+            .data(nodes)
+            .join("g")
+            .call(d3.drag<any, any>() // Adiciona arraste (drag & drop)
+                .on("start", (event, d) => {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
+                })
+                .on("drag", (event, d) => {
+                    d.fx = event.x;
+                    d.fy = event.y;
+                })
+                .on("end", (event, d) => {
+                    if (!event.active) simulation.alphaTarget(0);
+                    d.fx = null;
+                    d.fy = null;
+                }));
+
+        node.append("circle")
+            .attr("r", 8)
+            .attr("fill", "#1f2937") // Miolo escuro
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 2);
+
+        // Label (Nome do Jogador)
+        node.append("text")
+            .text((d: any) => d.id)
+            .attr('x', 12)
+            .attr('y', 4)
+            .style('font-size', '11px')
+            .style('font-weight', 'bold')
+            .style('fill', '#e5e7eb') // Texto claro
+            .style('pointer-events', 'none')
+            .style('text-shadow', '0px 0px 3px #000');
+
+        // 5. Legenda Visual (Opcional, mas ajuda muito)
+        const legend = svg.append("g").attr("transform", "translate(20, 20)");
+
+        const legendData = [
+            { label: "1 Win", color: "#4b5563" },
+            { label: "3 Wins", color: "#22d3ee" },
+            { label: "6 Wins", color: "#c084fc" },
+            { label: "9+ Wins", color: "#ef4444" }
+        ];
+
+        legendData.forEach((item, i) => {
+            const row = legend.append("g").attr("transform", `translate(0, ${i * 20})`);
+            row.append("rect").attr("width", 12).attr("height", 12).attr("fill", item.color).attr("rx", 2);
+            row.append("text").attr("x", 20).attr("y", 10).text(item.label).style("fill", "#9ca3af").style("font-size", "10px");
+        });
 
         simulation.on("tick", () => {
-            link.attr("x1", (d: any) => d.source.x).attr("y1", (d: any) => d.source.y).attr("x2", (d: any) => d.target.x).attr("y2", (d: any) => d.target.y);
+            link
+                .attr("x1", (d: any) => d.source.x)
+                .attr("y1", (d: any) => d.source.y)
+                .attr("x2", (d: any) => d.target.x)
+                .attr("y2", (d: any) => d.target.y);
             node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
         });
+
         return () => { simulation.stop(); };
     }, [coPlayMatrix]);
 
@@ -480,6 +562,7 @@ export default function DominoAnalytics() {
                 <div className="chart-box wide" style={{ minHeight: '450px' }}>
                     <h3>🕸️ Rede de Jogadores</h3>
                     <div ref={networkRef} style={{ width: '100%', height: '400px', background: '#fafafa', borderRadius: '12px' }} />
+
                 </div>
 
                 {/* 10. Streaks */}

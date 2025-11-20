@@ -122,6 +122,7 @@ button:hover {
     border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
+
     transition: transform 0.1s, box-shadow 0.1s;
 }
 
@@ -135,6 +136,12 @@ button:hover {
     font-weight: bold;
 }
 /* Estilos novos para Votação e Condições */
+.victory-section h3{
+  color: #ff8c42;
+}
+.voting-section h3{
+  color: #ff8c42;
+}
 
 .divider {
   border: 0;
@@ -225,14 +232,14 @@ button:hover {
 }
 
 .vote-btn.aura.active {
-  background: linear-gradient(45deg, #8b5cf6, #ec4899);
+  background: linear-gradient(45deg, #e23b08, #e67307);
   color: white;
   border: none;
   box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
 }
 
 .vote-btn.mogged.active {
-  background: #374151;
+  background: linear-gradient(45deg, #0e0829, #050116);
   color: #9ca3af;
   border-color: #9ca3af;
   font-weight: bold;
@@ -243,7 +250,7 @@ button:hover {
   width: 100%;
   padding: 16px;
   margin-top: 20px;
-  background: #10b981;
+  background:linear-gradient(rgb(255, 81, 0),rgba(189, 79, 6, 0.5));
   color: white;
   border: none;
   border-radius: 8px;
