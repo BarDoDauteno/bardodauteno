@@ -437,7 +437,18 @@
     color: #ffb84d;
     text-decoration: underline;
 }
-
+.analytics-btn{
+  
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(139, 119, 6, 0.63);
+  transition: all 0.3s ease;
+  margin: auto;
+  
+}
 /* Responsividade Mobile */
 @media (max-width: 768px) {
     .home-container{

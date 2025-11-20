@@ -215,6 +215,9 @@ export default function Home() {
 
                 <aside className="ranking glass-box">
                     <DominoRanking />
+                    {user && (
+                        <Link to="/domino/analytics"><button className="analytics-btn">📊 ESTATISTICAS COMPLETAS</button></Link>
+                    )}
                 </aside>
             </div>
         </div>

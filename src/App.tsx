@@ -17,13 +17,12 @@ import MatchPage from './pages/domino/MatchPage';
 import Profile from './pages/Profile';
 import JokesPage from './pages/JokesPage';
 import MemoriesPage from './pages/MemoriesPage';
-
+import DominoAnalytics from './pages/domino/DominoAnalytics';
 
 
 
 // App.tsx - versão simplificada
 export default function App() {
-  const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const { user } = useAuth(); // ← Use o user do AuthContext
 
   useEffect(() => {
@@ -39,10 +38,7 @@ export default function App() {
 
       // Não precisa setUser aqui, o AuthContext já cuida disso
 
-      if (!email) {
-        setAdminEmail(null);
-        return;
-      }
+
 
       // Verifica se o email está na tabela admins
       const { data: admin, error: adminError } = await supabase
@@ -86,6 +82,7 @@ export default function App() {
             <Route path="/jokes" element={<JokesPage />} />
             <Route path="/domino" element={<DominoPage />} />
             {user && <Route path="/domino/create" element={<CreateMatch />} />}
+            {user && <Route path="/domino/analytics" element={<DominoAnalytics />} />}
             <Route path="/domino/:matchId" element={<MatchPage />} />
             <Route path="/perfil/:userId" element={<Profile />} />
             <Route path="/login" element={<Login />} />

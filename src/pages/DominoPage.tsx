@@ -298,6 +298,9 @@ export default function DominoPage() {
                 {user && (
                     <Link to="/domino/create"><button className="create-match-btn">➕ Criar partida</button></Link>
                 )}
+                {user && (
+                    <Link to="/domino/analytics"><button className="analytics-btn">📊 ESTATISTICA</button></Link>
+                )}
             </header>
 
             {/* Filtro de Período - NOVO */}
