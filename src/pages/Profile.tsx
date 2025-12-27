@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import supabase from '../utils/supabase';
 import '../styles/Profile.css';
+import WrappedPage from './WrappedPage'
 
 type ProfileData = {
     id: string;
@@ -246,6 +247,37 @@ export default function Profile() {
                             alt="Avatar do usuário"
                             className="profile-avatar"
                         />
+                        {/* BOTÃO DE WRAPPED NA FOTO */}
+                        {isOwnProfile && (
+                        <div 
+                            className="wrapped-overlay"
+                            onClick={() => {
+                            // Salva dados e navega
+                            sessionStorage.setItem('wrappedData', JSON.stringify({
+                                playerId: userId,
+                                playerName: profile.full_name || 'Jogador',
+                                year: 2025
+                            }));
+                            navigate('/wrapped');
+                            }}
+                            style={{
+                            position: 'absolute',
+                            bottom: '10px',
+                            right: '10px',
+                            background: 'rgba(0,0,0,0.7)',
+                            borderRadius: '50%',
+                            width: '50px',
+                            height: '50px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                            }}
+                        >
+                            <span style={{ fontSize: '24px' }}>🎬</span>
+                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -253,7 +285,7 @@ export default function Profile() {
                     <h2 className="profile-name">
                         {profile.full_name || 'Usuário sem nome'}
                     </h2>
-
+                    
                     {currentUser && (
                         <p className="profile-email">{currentUser.email}</p>
                     )}
@@ -331,7 +363,25 @@ export default function Profile() {
                 >
                     🎴 {isOwnProfile ? 'Minhas Partidas' : 'Ver Partidas'}
                 </button>
-
+                {/* ADICIONAR BOTÃO DE WRAPPED AQUI TAMBÉM */}
+                {isOwnProfile && userId && (
+                <button
+                    onClick={() => {
+                    sessionStorage.setItem('wrappedData', JSON.stringify({
+                        playerId: userId,
+                        playerName: profile.full_name || 'Jogador',
+                        year: 2025
+                    }));
+                    navigate('/wrapped');
+                    }}
+                    className="action-btn tertiary"
+                    style={{
+                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                    }}
+                >
+                    🎬 Retrospectiva 2025
+                </button>
+                )}
                 <button
                     onClick={() => navigate('/domino')}
                     className="action-btn secondary"

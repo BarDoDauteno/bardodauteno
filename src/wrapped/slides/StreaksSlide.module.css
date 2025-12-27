@@ -1,0 +1,376 @@
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  max-width: 400px;
+  line-height: 1.4;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.loading svg {
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Grid de Streaks */
+.streaksGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 1.5rem;
+}
+
+/* Card de Streak */
+.streakCard {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.winStreak {
+  border-color: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.loseStreak {
+  border-color: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.currentStreak.winning {
+  border-color: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.currentStreak.losing {
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.statsCard {
+  border-color: rgba(168, 85, 247, 0.2);
+  background: rgba(168, 85, 247, 0.05);
+}
+
+/* Header do Card */
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.cardIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.winStreak .cardIcon {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.loseStreak .cardIcon {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.currentStreak.winning .cardIcon {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.currentStreak.losing .cardIcon {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde047;
+}
+
+.statsCard .cardIcon {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.2;
+}
+
+.cardSubtitle {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+/* Valor do Streak */
+.streakValueContainer {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.streakValue {
+  font-size: 2.5rem;
+  font-weight: 900;
+  font-family: "SF Mono", "Monaco", "Inconsolata", monospace;
+  color: white;
+  line-height: 1;
+  display: block;
+}
+
+.streakLabel {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* Streak Atual Especial */
+.currentStreakValue {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.currentStreakNumber {
+  font-size: 2.2rem;
+  font-weight: 900;
+  font-family: "SF Mono", "Monaco", "Inconsolata", monospace;
+  color: white;
+  line-height: 1;
+  display: block;
+}
+
+.currentStreakText {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  display: block;
+  margin-top: 0.25rem;
+  line-height: 1.2;
+}
+
+.streakStatus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+/* Barra de Progresso */
+.progressBar {
+  margin-bottom: 1.25rem;
+}
+
+.progressFill {
+  height: 6px;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  border-radius: 3px;
+  margin-bottom: 0.5rem;
+  transition: width 1s ease-out;
+}
+
+.loseProgress {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+}
+
+/* Estatísticas Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
+}
+
+.statValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: "SF Mono", "Monaco", "Inconsolata", monospace;
+  color: white;
+}
+
+.positive {
+  color: #22c55e !important;
+}
+
+.negative {
+  color: #ef4444 !important;
+}
+
+/* Footer do Card */
+.cardFooter {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+/* Legenda */
+.legend {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 800px;
+  text-align: center;
+}
+
+.legendText {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Responsividade */
+@media (min-width: 480px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .streaksGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .streakCard {
+    min-height: 220px;
+  }
+
+  .streakValue {
+    font-size: 2.8rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 2rem;
+  }
+
+  .streaksGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .streakCard {
+    min-height: 240px;
+    padding: 1.75rem;
+  }
+
+  .cardTitle {
+    font-size: 1.2rem;
+  }
+
+  .streakValue {
+    font-size: 3rem;
+  }
+
+  .currentStreakNumber {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .streaksGrid {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 1200px;
+  }
+
+  .streakCard {
+    min-height: 260px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Para telas muito pequenas */
+@media (max-width: 320px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .streakCard {
+    padding: 1.25rem;
+  }
+
+  .streakValue {
+    font-size: 2rem;
+  }
+
+  .cardHeader {
+    margin-bottom: 1rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}

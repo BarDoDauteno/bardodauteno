@@ -43,11 +43,35 @@ export default function DominoRanking() {
             const matches = data || [];
             const playerStatsMap = new Map<string, { wins: number; total: number }>();
 
+            // Função auxiliar melhorada
+            const getPlayerName = (player: any) => {
+                const name = player.DominoPlayers?.display_name || player.guest_name || '';
+                return cleanName(name);
+            };
+
             matches.forEach((match: any) => {
-                const teamRed = match.DominoMatchPlayers.filter((p: any) => p.team === 1)
-                    .map((p: any) => cleanName(p.DominoPlayers?.display_name || p.guest_name || 'Convidado'));
-                const teamBlue = match.DominoMatchPlayers.filter((p: any) => p.team === 2)
-                    .map((p: any) => cleanName(p.DominoPlayers?.display_name || p.guest_name || 'Convidado'));
+                const matchPlayers = match.DominoMatchPlayers || [];
+
+                // FILTRA jogadores com nome válido
+                const validPlayers = matchPlayers.filter((p: any) => {
+                    const playerName = getPlayerName(p);
+                    return playerName !== 'Convidado' && playerName.trim() !== '';
+                });
+
+                // Se não houver jogadores válidos suficientes (menos de 4), ignora a partida
+                if (validPlayers.length < 4) {
+                    return; // Pula esta partida
+                }
+
+                const teamRed = validPlayers.filter((p: any) => p.team === 1)
+                    .map((p: any) => getPlayerName(p));
+                const teamBlue = validPlayers.filter((p: any) => p.team === 2)
+                    .map((p: any) => getPlayerName(p));
+
+                // Se algum time não tiver 2 jogadores, ignora a partida
+                if (teamRed.length !== 2 || teamBlue.length !== 2) {
+                    return;
+                }
 
                 // Processar jogadores individuais
                 [...teamRed, ...teamBlue].forEach(playerName => {
@@ -86,7 +110,6 @@ export default function DominoRanking() {
             setLoading(false);
         }
     };
-
     useEffect(() => {
         fetchRanking();
     }, []);

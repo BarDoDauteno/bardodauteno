@@ -156,8 +156,9 @@ export default function CreateMatch() {
                 player_id: playerMap.get(r.userId),
                 team: r.team,
                 // Feature Nova: Métricas Individuais
-                has_aura: votes[r.userId!]?.aura || false,
-                is_mogged: votes[r.userId!]?.mogged || false
+                aura_count: votes[r.userId!]?.aura ? 1 : 0,
+                mogged_count: votes[r.userId!]?.mogged ? 1 : 0
+
             }));
 
         const { error: playersError } = await supabase

@@ -1,0 +1,763 @@
+finalSlideContainer/* Container principal - bloqueia eventos do pai */
+.finalSlideContainer {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto !important; /* Sobrepõe qualquer pointer-events: none do pai */
+  z-index: 1000; /* Garante que fique acima de outras camadas */
+  cursor: default; /* Remove cursor de pointer */
+}
+
+/* Remove qualquer herança de pointer-events */
+.finalSlideContainer * {
+  pointer-events: auto;
+}
+
+/* Container interno */
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+/* Botão de fechar próprio do slide */
+.slideCloseButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.slideCloseButton:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  max-width: 500px;
+  margin: 0.5rem auto 0;
+  line-height: 1.4;
+}
+
+/* Carrossel Section */
+.carouselSection {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 2rem;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.carouselHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.carouselTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.selectionControls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.selectionButton {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.selectionButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Carrossel */
+.carouselWrapper {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.carousel {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 0.5rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.carouselButton:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.carouselButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.leftButton {
+  left: -20px;
+}
+
+.rightButton {
+  right: -20px;
+}
+
+/* Preview Card */
+.previewCard {
+  flex: 0 0 auto;
+  width: 200px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 2px solid transparent;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.previewCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.previewCard.selected {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.previewImage {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  overflow: hidden;
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholderThumbnail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.slideNumber {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: "SF Mono", "Monaco", "Inconsolata", monospace;
+}
+
+.selectionOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.previewCard:hover .selectionOverlay,
+.previewCard.selected .selectionOverlay {
+  opacity: 1;
+}
+
+.selectionCheck {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.previewInfo {
+  padding: 1rem;
+}
+
+.previewTitle {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.previewActions {
+  display: flex;
+  justify-content: center;
+}
+
+.selectButton {
+  padding: 0.4rem 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.selectButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.selectButton.selected {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.selectionSummary {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.selectedCount {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Actions Section */
+.actionsSection {
+  margin-bottom: 2rem;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.actionButton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.actionButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.downloadButton {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.shareButton {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.homeButton {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.buttonContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.buttonText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.buttonTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.buttonSubtitle {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Progress Bar */
+.progressContainer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Final Message */
+.finalMessage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.finalMessage svg {
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+/* Instructions */
+.instructions {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.instructionsText {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Responsividade */
+@media (min-width: 640px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .actionsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .carousel {
+    padding: 1rem;
+  }
+
+  .previewCard {
+    width: 220px;
+  }
+
+  .previewImage {
+    height: 140px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .actionsGrid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .carouselSection {
+    padding: 2rem;
+  }
+
+  .carouselHeader {
+    margin-bottom: 2rem;
+  }
+
+  .carouselTitle {
+    font-size: 1.2rem;
+  }
+
+  .previewCard {
+    width: 240px;
+  }
+
+  .previewImage {
+    height: 150px;
+  }
+
+  .buttonTitle {
+    font-size: 1.2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .carouselButton {
+    width: 48px;
+    height: 48px;
+  }
+
+  .leftButton {
+    left: -24px;
+  }
+
+  .rightButton {
+    right: -24px;
+  }
+
+  .finalMessage {
+    font-size: 1rem;
+    padding: 1.5rem;
+  }
+}
+
+/* Para telas muito pequenas */
+@media (max-width: 320px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .carouselSection {
+    padding: 1rem;
+  }
+
+  .carouselHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .previewCard {
+    width: 180px;
+  }
+
+  .previewImage {
+    height: 100px;
+  }
+
+  .actionButton {
+    padding: 1rem;
+  }
+
+  .buttonContent {
+    gap: 0.75rem;
+  }
+
+  .buttonTitle {
+    font-size: 1rem;
+  }
+
+  .buttonSubtitle {
+    font-size: 0.8rem;
+  }
+}
+/* Garantir que todos os botões sejam clicáveis */
+.actionButton,
+.selectionButton,
+.carouselButton,
+.selectButton,
+.slideCloseButton {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+/* Prevenir eventos em áreas não interativas */
+.container
+  > *:not(button):not(.actionButton):not(.selectionButton):not(
+    .carouselButton
+  ):not(.selectButton):not(.slideCloseButton) {
+  pointer-events: none;
+}
+
+/* Permitir eventos apenas nos elementos interativos dentro de containers */
+.carouselSection,
+.actionsSection,
+.finalMessage {
+  pointer-events: auto;
+}
+
+/* Garantir que o scroll funcione */
+.container {
+  pointer-events: auto;
+}
+
+/* Impedir seleção de texto */
+.container {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Para touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .finalSlideContainer {
+    touch-action: pan-y pinch-zoom;
+  }
+
+  .container {
+    touch-action: pan-y;
+  }
+}
+.navigationHeader {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1001;
+}
+
+.backButton {
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: translateX(-2px);
+}
+
+.closeButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+/* Container principal */
+.finalSlideContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  pointer-events: auto !important;
+  z-index: 1000;
+}
+
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Header de navegação */
+.navigationHeader {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  z-index: 1001;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 80%, transparent);
+  backdrop-filter: blur(10px);
+  margin-bottom: 1rem;
+}
+
+.backButton {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(-2px);
+}
+
+.closeButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+
+/* REMOVA esta classe duplicada */
+.slideCloseButton {
+  display: none;
+}
+
+/* ... resto do seu CSS permanece igual ... */
+
+/* Garantir que botões sejam clicáveis */
+.actionButton,
+.selectionButton,
+.carouselButton,
+.selectButton,
+.backButton,
+.closeButton {
+  cursor: pointer;
+  pointer-events: auto;
+  border: none;
+  outline: none;
+}
+
+/* Remove qualquer overlay que bloqueie cliques */
+.finalSlideContainer::before,
+.finalSlideContainer::after {
+  display: none;
+}

@@ -1,0 +1,253 @@
+/* RankingsSlide.module.css - Adicione estas classes */
+
+/* ===== Container principal ===== */
+.root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ===== Destaque do jogador ===== */
+.highlightCard {
+  width: 100%;
+  max-width: 420px;
+  margin: 1.5rem 0 2rem;
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.2),
+    rgba(236, 72, 153, 0.2)
+  );
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+}
+
+.highlightContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.highlightHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+}
+
+.crownIcon {
+  color: #facc15;
+}
+
+.highlightPosition {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: white;
+  margin-top: 0.25rem;
+}
+
+.highlightMeta {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.highlightMedal {
+  font-size: 3rem;
+}
+
+/* ===== Ranking list ===== */
+.listWrapper {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 2rem;
+}
+
+.listTitle {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.rankItem,
+.rankItemActive {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rankItemActive {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.2),
+    rgba(168, 85, 247, 0.2)
+  );
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.rankLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rankPosition {
+  font-size: 1.75rem;
+  font-weight: 700;
+  width: 2.5rem;
+  text-align: center;
+}
+
+.rankName {
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.currentDot {
+  width: 0.4rem;
+  height: 0.4rem;
+  background: #3b82f6;
+  border-radius: 9999px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.rankWins {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.rankRight {
+  text-align: right;
+}
+
+.rankWinrate {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+}
+
+.rankLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ===== Estilos para gráficos ===== */
+.chartContainer {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 2rem;
+}
+
+.chartTitle {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.chartWrapper {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Stats ===== */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 2rem;
+  max-width: 420px;
+  width: 100%;
+}
+
+.stat {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.statValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  margin-top: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.statIconGold {
+  color: #facc15;
+}
+
+.statIconGreen {
+  color: #4ade80;
+}
+
+.statIconBlue {
+  color: #60a5fa;
+}
+
+/* ===== Responsividade ===== */
+@media (max-width: 768px) {
+  .highlightCard {
+    padding: 1rem;
+  }
+
+  .highlightPosition {
+    font-size: 1.75rem;
+  }
+
+  .rankItem,
+  .rankItemActive {
+    padding: 0.75rem;
+  }
+
+  .rankPosition {
+    font-size: 1.5rem;
+    width: 2rem;
+  }
+
+  .stat {
+    padding: 0.75rem;
+  }
+}

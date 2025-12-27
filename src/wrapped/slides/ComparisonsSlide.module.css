@@ -1,0 +1,484 @@
+/* Container principal adaptado para navbar */
+.wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.container {
+  width: 100%;
+  min-height: min-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 15px 20px;
+  box-sizing: border-box;
+}
+
+/* Header fixo no topo */
+.header {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 20px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding-top: 10px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 80%, transparent);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  line-height: 1.3;
+  padding: 0 10px;
+}
+
+.loading {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Grid de Comparações - 3 colunas responsivas */
+.comparisonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 20px;
+}
+
+/* Cards de Comparação */
+.comparisonCard {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  min-height: 180px;
+}
+
+.comparisonCard.highlight {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.comparisonCard.positive {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.comparisonCard.negative {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.comparisonCard.neutral {
+  border-color: rgba(107, 114, 128, 0.3);
+  background: rgba(107, 114, 128, 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cardIconWrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.cardIconWrapper svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cardHeaderText {
+  flex: 1;
+}
+
+.cardTitle {
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.cardStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.statusLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.diffValue {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: "SF Mono", "Monaco", "Inconsolata", monospace;
+}
+
+.diffValue.positive {
+  color: #10b981;
+}
+
+.diffValue.negative {
+  color: #ef4444;
+}
+
+.diffValue.highlight {
+  color: #f59e0b;
+}
+
+.diffValue.neutral {
+  color: #6b7280;
+}
+
+/* Linha de comparação - 3 itens lado a lado */
+.comparisonRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: auto;
+}
+
+.comparisonItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  min-height: 70px;
+  justify-content: center;
+}
+
+.comparisonLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+}
+
+.comparisonLabel svg {
+  width: 16px;
+  height: 16px;
+}
+
+.comparisonValue {
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: "SF Mono", "Monaco", "Inconsolata", monospace;
+  color: white;
+  line-height: 1;
+}
+
+/* Card do Melhor Jogador */
+.bestPlayerCard {
+  width: 100%;
+  max-width: 800px;
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.15),
+    rgba(251, 191, 36, 0.1)
+  );
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 16px;
+  margin-top: 10px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.bestPlayerHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bestPlayerIcon {
+  width: 22px;
+  height: 22px;
+  color: #f59e0b;
+}
+
+.bestPlayerTitle {
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.bestPlayerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bestPlayerId {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.bestPlayerLabel {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.bestPlayerValue {
+  color: #f59e0b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: "SF Mono", "Monaco", "Inconsolata", monospace;
+}
+
+.bestPlayerQuickStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.quickStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quickStatValue {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: "SF Mono", "Monaco", "Inconsolata", monospace;
+  margin-bottom: 2px;
+}
+
+.quickStatLabel {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+/* Legenda */
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 800px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.legendColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+/* Responsividade - Mobile */
+@media (max-width: 768px) {
+  .comparisonGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-width: 400px;
+  }
+
+  .comparisonCard {
+    min-height: 160px;
+    padding: 14px;
+  }
+
+  .comparisonRow {
+    gap: 8px;
+  }
+
+  .comparisonItem {
+    padding: 6px 2px;
+    min-height: 60px;
+  }
+
+  .comparisonValue {
+    font-size: 1.1rem;
+  }
+
+  .bestPlayerQuickStats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .header {
+    position: relative;
+    background: transparent;
+    backdrop-filter: none;
+  }
+}
+
+/* Responsividade - Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .comparisonGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .bestPlayerCard {
+    grid-column: span 2;
+  }
+}
+
+/* Responsividade - Desktop */
+@media (min-width: 1025px) {
+  .comparisonGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .container {
+    padding: 20px 25px 30px;
+  }
+
+  .comparisonCard {
+    padding: 20px;
+    min-height: 200px;
+  }
+
+  .cardTitle {
+    font-size: 1.2rem;
+  }
+
+  .comparisonValue {
+    font-size: 1.3rem;
+  }
+
+  .quickStatValue {
+    font-size: 1.4rem;
+  }
+}
+
+/* Ajustes para telas muito pequenas */
+@media (max-width: 360px) {
+  .container {
+    padding: 8px 10px 15px;
+  }
+
+  .comparisonCard {
+    padding: 12px;
+    min-height: 150px;
+  }
+
+  .cardIconWrapper {
+    width: 36px;
+    height: 36px;
+  }
+
+  .cardIconWrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .cardTitle {
+    font-size: 1rem;
+  }
+
+  .comparisonRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .comparisonItem {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 8px 10px;
+    min-height: auto;
+  }
+
+  .comparisonLabel {
+    flex-direction: row;
+    gap: 6px;
+    margin-bottom: 0;
+  }
+
+  .comparisonValue {
+    font-size: 1.1rem;
+  }
+
+  .legend {
+    gap: 10px;
+  }
+}
+
+/* Suporte a safe areas */
+@supports (padding: max(0px)) {
+  .wrapper {
+    padding-left: max(15px, env(safe-area-inset-left));
+    padding-right: max(15px, env(safe-area-inset-right));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
